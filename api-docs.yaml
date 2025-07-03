@@ -1,0 +1,2878 @@
+openapi: 3.0.0
+info:
+  title: BioGenetic API
+  description: API para el proyecto BioGenetic, gestión de toros y registros genéticos
+  version: 0.1.0
+  contact:
+    name: BioGenetic Support
+servers:
+  - url: /api
+    description: Servidor principal
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  
+  schemas:
+    Error:
+      type: object
+      properties:
+        detail:
+          type: string
+          description: Mensaje de error detallado
+    
+    # Esquemas de Raza
+    RaceSchema:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID único de la raza
+        name:
+          type: string
+          description: Nombre de la raza
+        description:
+          type: string
+          description: Descripción de la raza
+        code:
+          type: string
+          description: Código de la raza
+        created_at:
+          type: string
+          format: date-time
+          description: Fecha de creación
+        updated_at:
+          type: string
+          format: date-time
+          description: Fecha de última actualización
+    
+    RaceCreate:
+      type: object
+      required:
+        - name
+        - description
+        - code
+      properties:
+        name:
+          type: string
+          description: Nombre de la raza
+        description:
+          type: string
+          description: Descripción de la raza
+        code:
+          type: string
+          description: Código de la raza
+    
+    # Esquemas de Sexo
+    SexSchema:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID único del sexo
+        name:
+          type: string
+          description: Nombre del sexo
+        code:
+          type: integer
+          description: Código del sexo
+        created_at:
+          type: string
+          format: date-time
+          description: Fecha de creación
+        updated_at:
+          type: string
+          format: date-time
+          description: Fecha de última actualización
+    
+    SexCreate:
+      type: object
+      required:
+        - name
+        - code
+      properties:
+        name:
+          type: string
+          description: Nombre del sexo
+        code:
+          type: integer
+          description: Código del sexo
+    
+    # Esquemas de Toro
+    BullStatus:
+      type: string
+      enum:
+        - Active
+        - Inactive
+      description: Estado del toro
+    
+    BullSchema:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID único del toro
+        name:
+          type: string
+          description: Nombre del toro
+        register:
+          type: string
+          nullable: true
+          description: Número de registro del toro
+        race_id:
+          type: integer
+          description: ID de la raza del toro
+        sex_id:
+          type: integer
+          description: ID del sexo del toro
+        status:
+          $ref: '#/components/schemas/BullStatus'
+        user_id:
+          type: integer
+          description: ID del usuario propietario
+        created_at:
+          type: string
+          format: date-time
+          description: Fecha de creación
+        updated_at:
+          type: string
+          format: date-time
+          description: Fecha de última actualización
+    
+    BullCreate:
+      type: object
+      required:
+        - name
+        - race_id
+        - sex_id
+      properties:
+        name:
+          type: string
+          description: Nombre del toro
+        register:
+          type: string
+          nullable: true
+          description: Número de registro del toro
+        race_id:
+          type: integer
+          description: ID de la raza del toro
+        sex_id:
+          type: integer
+          description: ID del sexo del toro
+        status:
+          $ref: '#/components/schemas/BullStatus'
+          default: Active
+    
+    BullUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Nombre del toro
+        register:
+          type: string
+          nullable: true
+          description: Número de registro del toro
+        race_id:
+          type: integer
+          description: ID de la raza del toro
+        sex_id:
+          type: integer
+          description: ID del sexo del toro
+        status:
+          $ref: '#/components/schemas/BullStatus'
+    
+    # Esquemas de Input/Output
+    InputStatus:
+      type: string
+      enum:
+        - Pending
+        - Processing
+        - Completed
+        - Cancelled
+      description: Estado del input
+    
+    InputSchema:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID único del input
+        quantity_received:
+          type: number
+          format: float
+          description: Cantidad recibida
+        escalarilla:
+          type: string
+          description: Escalarilla (asignada por administrador)
+        bull_id:
+          type: integer
+          description: ID del toro
+        status_id:
+          $ref: '#/components/schemas/InputStatus'
+        lote:
+          type: string
+          description: Lote (asignado por administrador)
+        fv:
+          type: string
+          format: date-time
+          description: Fecha/valor (asignado por administrador)
+        quantity_taken:
+          type: number
+          format: float
+          description: Cantidad tomada
+        total:
+          type: number
+          format: float
+          description: Total
+        user_id:
+          type: integer
+          description: ID del usuario
+        created_at:
+          type: string
+          format: date-time
+          description: Fecha de creación
+        updated_at:
+          type: string
+          format: date-time
+          description: Fecha de última actualización
+    
+    InputCreate:
+      type: object
+      required:
+        - quantity_received
+        - bull_id
+      properties:
+        quantity_received:
+          type: number
+          format: float
+          description: Cantidad recibida
+        escalarilla:
+          type: string
+          description: Escalarilla (opcional, valor predeterminado 'Sin asignar')
+        bull_id:
+          type: integer
+          description: ID del toro
+        lote:
+          type: string
+          description: Lote (opcional, valor predeterminado 'Sin asignar')
+        fv:
+          type: string
+          format: date-time
+          description: Fecha/valor (opcional, valor predeterminado fecha actual)
+        quantity_taken:
+          type: number
+          format: float
+          default: 0
+          description: Cantidad tomada (opcional, predeterminado 0)
+    
+    InputUpdate:
+      type: object
+      properties:
+        quantity_received:
+          type: number
+          format: float
+          description: Cantidad recibida
+        escalarilla:
+          type: string
+          description: Escalarilla
+        bull_id:
+          type: integer
+          description: ID del toro
+        status_id:
+          $ref: '#/components/schemas/InputStatus'
+        lote:
+          type: string
+          description: Lote
+        fv:
+          type: string
+          format: date-time
+          description: Fecha/valor
+        quantity_taken:
+          type: number
+          format: float
+          description: Cantidad tomada
+    
+    InputDetailSchema:
+      type: object
+      properties:
+        input_id:
+          type: integer
+          description: ID del input
+        quantity_received:
+          type: number
+          format: float
+          description: Cantidad recibida
+        escalarilla:
+          type: string
+          description: Escalarilla
+        status_id:
+          type: string
+          description: Estado del input
+        lote:
+          type: string
+          description: Lote
+        fv:
+          type: string
+          format: date-time
+          description: Fecha/valor
+        quantity_taken:
+          type: number
+          format: float
+          description: Cantidad tomada
+        total:
+          type: number
+          format: float
+          description: Total
+        created_at:
+          type: string
+          format: date-time
+          description: Fecha de creación
+        bull_name:
+          type: string
+          description: Nombre del toro
+        register_number:
+          type: string
+          nullable: true
+          description: Número de registro del toro
+        race_name:
+          type: string
+          description: Nombre de la raza
+        client_name:
+          type: string
+          description: Nombre del cliente
+        client_document:
+          type: string
+          description: Documento del cliente
+    
+    OutputSchema:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID único del output
+        input_id:
+          type: integer
+          description: ID del input relacionado
+        output_date:
+          type: string
+          format: date-time
+          description: Fecha de salida
+        quantity_output:
+          type: number
+          format: float
+          description: Cantidad de salida
+        remark:
+          type: string
+          nullable: true
+          description: Observaciones
+        created_at:
+          type: string
+          format: date-time
+          description: Fecha de creación
+        updated_at:
+          type: string
+          format: date-time
+          description: Fecha de última actualización
+    
+    OutputCreate:
+      type: object
+      required:
+        - quantity_output
+      properties:
+        quantity_output:
+          type: number
+          format: float
+          description: Cantidad de salida
+        output_date:
+          type: string
+          format: date-time
+          description: Fecha de salida
+        remark:
+          type: string
+          nullable: true
+          description: Observaciones
+    
+    OutputUpdate:
+      type: object
+      properties:
+        quantity_output:
+          type: number
+          format: float
+          description: Cantidad de salida
+        output_date:
+          type: string
+          format: date-time
+          description: Fecha de salida
+        remark:
+          type: string
+          nullable: true
+          description: Observaciones
+    
+    # Esquemas de Usuario Actualizados
+    DocumentType:
+      type: string
+      enum:
+        - identity_card
+        - passport
+        - other
+      description: Tipo de documento del usuario
+    
+    UserStatus:
+      type: string
+      enum:
+        - Active
+        - Inactive
+      description: Estado del usuario
+    
+    UserSchema:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID único del usuario
+        full_name:
+          type: string
+          description: Nombre completo del usuario
+        email:
+          type: string
+          format: email
+          description: Email del usuario
+        number_document:
+          type: string
+          description: Número de documento
+        type_document:
+          $ref: '#/components/schemas/DocumentType'
+        specialty:
+          type: string
+          description: Especialidad del usuario
+        phone:
+          type: string
+          description: Número de teléfono
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoleSchema'
+          description: Roles del usuario
+        created_at:
+          type: string
+          format: date-time
+          description: Fecha de creación
+        updated_at:
+          type: string
+          format: date-time
+          description: Fecha de última actualización
+    
+    UserCreate:
+      type: object
+      required:
+        - full_name
+        - email
+        - number_document
+        - type_document
+        - specialty
+        - phone
+        - password
+      properties:
+        full_name:
+          type: string
+          description: Nombre completo del usuario
+        email:
+          type: string
+          format: email
+          description: Email del usuario
+        number_document:
+          type: string
+          description: Número de documento
+        type_document:
+          $ref: '#/components/schemas/DocumentType'
+        specialty:
+          type: string
+          description: Especialidad del usuario
+        phone:
+          type: string
+          description: Número de teléfono
+        password:
+          type: string
+          description: Contraseña del usuario
+    
+    UserCreateByAdmin:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/UserCreate'
+        - type: object
+          properties:
+            roles:
+              type: array
+              items:
+                type: integer
+              description: IDs de los roles a asignar
+    
+    UserUpdate:
+      type: object
+      properties:
+        full_name:
+          type: string
+          description: Nombre completo del usuario
+        email:
+          type: string
+          format: email
+          description: Email del usuario
+        number_document:
+          type: string
+          description: Número de documento
+        type_document:
+          $ref: '#/components/schemas/DocumentType'
+        specialty:
+          type: string
+          description: Especialidad del usuario
+        phone:
+          type: string
+          description: Número de teléfono
+        password:
+          type: string
+          description: Contraseña del usuario
+    
+    # Esquemas de Rol
+    RoleSchema:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID único del rol
+        name:
+          type: string
+          description: Nombre del rol
+        created_at:
+          type: string
+          format: date-time
+          description: Fecha de creación
+        updated_at:
+          type: string
+          format: date-time
+          description: Fecha de última actualización
+    
+    RoleCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Nombre del rol
+    
+    RoleUserSchema:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          description: ID del usuario
+        role_id:
+          type: integer
+          description: ID del rol
+    
+    # Esquemas de Autenticación
+    LoginSchema:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email del usuario
+        password:
+          type: string
+          description: Contraseña del usuario
+    
+    TokenSchema:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: Token JWT de acceso
+        token_type:
+          type: string
+          description: Tipo de token (bearer)
+
+    UserInfoSchema:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID del usuario
+        full_name:
+          type: string
+          description: Nombre completo del usuario
+        email:
+          type: string
+          description: Correo electrónico del usuario
+        number_document:
+          type: string
+          description: Número de documento del usuario
+        phone:
+          type: string
+          description: Teléfono del usuario
+        type_document:
+          type: string
+          nullable: true
+          description: Tipo de documento del usuario
+        specialty:
+          type: string
+          nullable: true
+          description: Especialidad del usuario
+    
+    BullDetailSchema:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID único del toro
+        name:
+          type: string
+          description: Nombre del toro
+        registration_number:
+          type: string
+          nullable: true
+          description: Número de registro del toro (alias: register)
+        race_id:
+          type: integer
+          description: ID de la raza del toro
+        race_name:
+          type: string
+          nullable: true
+          description: Nombre de la raza
+        sex_id:
+          type: integer
+          description: ID del sexo del toro
+        sex_name:
+          type: string
+          nullable: true
+          description: Nombre del sexo
+        status:
+          type: string
+          description: Estado del toro (Active/Inactive)
+        created_at:
+          type: string
+          format: date-time
+          description: Fecha de creación
+        updated_at:
+          type: string
+          format: date-time
+          description: Fecha de última actualización
+        user:
+          $ref: '#/components/schemas/UserInfoSchema'
+
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - auth
+      summary: Autenticación de usuario
+      description: Obtiene un token JWT para autenticación
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginSchema'
+      responses:
+        '200':
+          description: Token de acceso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenSchema'
+        '401':
+          description: Credenciales inválidas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /auth/register:
+    post:
+      tags:
+        - auth
+      summary: Registro de usuario
+      description: Registra un nuevo usuario en el sistema con rol de Cliente exclusivamente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '201':
+          description: Usuario registrado correctamente con rol de Cliente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSchema'
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /auth/me:
+    get:
+      tags:
+        - auth
+      summary: Información del usuario actual
+      description: Obtiene la información del usuario autenticado
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Información del usuario
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSchema'
+        '401':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /auth/token-to-cookie:
+    post:
+      tags:
+        - auth
+      summary: Guardar token en cookie
+      description: Guarda el token JWT como una cookie para el navegador
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+              properties:
+                token:
+                  type: string
+                  description: Token JWT
+                redirect_url:
+                  type: string
+                  description: URL a redirigir después de guardar el token
+      responses:
+        '200':
+          description: Token guardado en cookie
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: Estado de la operación
+                  message:
+                    type: string
+                    description: Mensaje informativo
+                  redirect:
+                    type: string
+                    description: URL de redirección (si se proporcionó)
+  
+  /auth/clear-token:
+    post:
+      tags:
+        - auth
+      summary: Eliminar token de cookie
+      description: Elimina el token JWT guardado en la cookie
+      responses:
+        '200':
+          description: Token eliminado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: Estado de la operación
+                  message:
+                    type: string
+                    description: Mensaje informativo
+  
+  /bulls:
+    get:
+      tags:
+        - bulls
+      summary: Obtener lista de toros
+      description: Obtiene la lista de toros con información detallada incluyendo datos del usuario que los registró
+      parameters:
+        - name: search_query
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Búsqueda general en nombre del toro, registro, documento o nombre del cliente
+        - name: date_from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Fecha de inicio para filtrar por fecha de creación del toro (formato ISO 8601, ej. 2023-01-01T00:00:00)
+        - name: date_to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Fecha de fin para filtrar por fecha de creación del toro (formato ISO 8601, ej. 2023-01-31T23:59:59)
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: Número de registros a omitir (paginación)
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+          description: Número máximo de registros a devolver (paginación)
+      responses:
+        '200':
+          description: Lista de toros con información detallada del usuario
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BullDetailSchema'
+        '401':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    post:
+      tags:
+        - bulls
+      summary: Crear un nuevo toro
+      description: Crea un registro de toro nuevo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BullCreate'
+      responses:
+        '201':
+          description: Toro creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BullSchema'
+        '401':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /bulls/{bull_id}:
+    get:
+      tags:
+        - bulls
+      summary: Obtener un toro por ID
+      description: Obtiene información detallada de un toro por su ID
+      parameters:
+        - name: bull_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del toro
+      responses:
+        '200':
+          description: Información del toro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BullSchema'
+        '404':
+          description: Toro no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    put:
+      tags:
+        - bulls
+      summary: Actualizar un toro
+      description: Actualiza información de un toro existente
+      parameters:
+        - name: bull_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del toro
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BullUpdate'
+      responses:
+        '200':
+          description: Toro actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BullSchema'
+        '404':
+          description: Toro no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    delete:
+      tags:
+        - bulls
+      summary: Eliminar un toro
+      description: Elimina un toro existente
+      parameters:
+        - name: bull_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del toro
+      responses:
+        '204':
+          description: Toro eliminado exitosamente
+        '404':
+          description: Toro no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /bulls/race/{race_id}:
+    get:
+      tags:
+        - bulls
+      summary: Obtener toros por raza
+      description: Obtiene lista de toros filtrada por raza
+      parameters:
+        - name: race_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID de la raza
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: Número de registros a omitir
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+          description: Número máximo de registros
+      responses:
+        '200':
+          description: Lista de toros de la raza especificada
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BullSchema'
+  
+  /bulls/sex/{sex_id}:
+    get:
+      tags:
+        - bulls
+      summary: Obtener toros por sexo
+      description: Obtiene lista de toros filtrada por sexo
+      parameters:
+        - name: sex_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del sexo
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: Número de registros a omitir
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+          description: Número máximo de registros
+      responses:
+        '200':
+          description: Lista de toros del sexo especificado
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BullSchema'
+  
+  /bulls/my-bulls:
+    get:
+      tags:
+        - bulls
+      summary: Obtener mis toros
+      description: Obtiene lista de toros del usuario autenticado
+      parameters:
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: Número de registros a omitir
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+          description: Número máximo de registros
+      responses:
+        '200':
+          description: Lista de toros del usuario
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BullSchema'
+  
+  /bulls/filter:
+    get:
+      tags:
+        - bulls
+      summary: Filtrar toros
+      description: Filtra toros por diversos criterios
+      parameters:
+        - name: search_query
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Búsqueda general en nombre, registro, documento o nombre del cliente
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filtrar específicamente por nombre del toro (coincidencia parcial)
+        - name: register
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filtrar específicamente por número de registro del toro (coincidencia parcial)
+        - name: race_id
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: ID de la raza
+        - name: sex_id
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: ID del sexo
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/BullStatus'
+          description: Estado del toro
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: Número de registros a omitir
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+          description: Número máximo de registros
+      responses:
+        '200':
+          description: Lista de toros filtrados
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BullSchema'
+  
+  /inputs:
+    get:
+      tags:
+        - inputs
+      summary: Obtener lista de inputs
+      description: Obtiene la lista de inputs (filtrada según permisos del usuario)
+      parameters:
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: Número de registros a omitir
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+          description: Número máximo de registros
+      responses:
+        '200':
+          description: Lista de inputs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InputSchema'
+    
+    post:
+      tags:
+        - inputs
+      summary: Crear un nuevo input
+      description: Crea un registro de input nuevo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InputCreate'
+      responses:
+        '201':
+          description: Input creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InputSchema'
+  
+  /inputs/filter:
+    get:
+      tags:
+        - inputs
+      summary: Filtrar inputs
+      description: Busca inputs usando criterios de búsqueda
+      parameters:
+        - name: search_query
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Texto de búsqueda (cliente, toro, registro)
+        - name: date_from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Fecha de inicio para filtrar
+        - name: date_to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Fecha de fin para filtrar
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: Número de registros a omitir
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+          description: Número máximo de registros
+      responses:
+        '200':
+          description: Lista de inputs filtrados con detalles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+  
+  /inputs/user/{user_id}:
+    get:
+      tags:
+        - inputs
+      summary: Obtener inputs por usuario
+      description: Obtiene lista de inputs filtrada por usuario
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del usuario
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: Número de registros a omitir
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+          description: Número máximo de registros
+      responses:
+        '200':
+          description: Lista de inputs del usuario
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InputSchema'
+  
+  /inputs/bull/{bull_id}:
+    get:
+      tags:
+        - inputs
+      summary: Obtener inputs por toro
+      description: Obtiene lista de inputs filtrada por toro
+      parameters:
+        - name: bull_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del toro
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: Número de registros a omitir
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+          description: Número máximo de registros
+      responses:
+        '200':
+          description: Lista de inputs del toro
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InputSchema'
+  
+  /inputs/{input_id}:
+    get:
+      tags:
+        - inputs
+      summary: Obtener un input por ID
+      description: Obtiene información detallada de un input por su ID
+      parameters:
+        - name: input_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del input
+      responses:
+        '200':
+          description: Información del input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InputSchema'
+        '404':
+          description: Input no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    put:
+      tags:
+        - inputs
+      summary: Actualizar un input
+      description: Actualiza información de un input existente
+      parameters:
+        - name: input_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del input
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InputUpdate'
+      responses:
+        '200':
+          description: Input actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InputSchema'
+        '404':
+          description: Input no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    delete:
+      tags:
+        - inputs
+      summary: Eliminar un input
+      description: Elimina un input existente
+      parameters:
+        - name: input_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del input
+      responses:
+        '204':
+          description: Input eliminado exitosamente
+        '404':
+          description: Input no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /inputs/{input_id}/status/{status_name}:
+    put:
+      tags:
+        - inputs
+      summary: Cambiar estado de un input
+      description: Actualiza el estado de un input existente
+      parameters:
+        - name: input_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del input
+        - name: status_name
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/InputStatus'
+          description: Nuevo estado del input
+      responses:
+        '200':
+          description: Estado actualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Mensaje de éxito
+        '404':
+          description: Input no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /inputs/{input_id}/outputs:
+    post:
+      tags:
+        - outputs
+      summary: Añadir un output a un input
+      description: Crea un nuevo output asociado a un input existente
+      parameters:
+        - name: input_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del input
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OutputCreate'
+      responses:
+        '200':
+          description: Output creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutputSchema'
+        '404':
+          description: Input no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /outputs:
+    get:
+      tags:
+        - outputs
+      summary: Obtener lista de outputs
+      description: Obtiene la lista de outputs con filtros opcionales
+      parameters:
+        - name: search_query
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Búsqueda general en escalarilla, lote u observaciones
+        - name: date_from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Fecha de inicio para filtrar por fecha de salida (formato ISO 8601, ej. 2023-01-01T00:00:00)
+        - name: date_to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Fecha de fin para filtrar por fecha de salida (formato ISO 8601, ej. 2023-01-31T23:59:59)
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: Número de registros a omitir (paginación)
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+          description: Número máximo de registros a devolver (paginación)
+      responses:
+        '200':
+          description: Lista de outputs con detalles del input asociado
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    output_id:
+                      type: integer
+                      description: ID del output
+                    input_id:
+                      type: integer
+                      description: ID del input asociado
+                    output_date:
+                      type: string
+                      format: date-time
+                      description: Fecha de salida
+                    quantity_output:
+                      type: number
+                      format: float
+                      description: Cantidad de salida
+                    remark:
+                      type: string
+                      nullable: true
+                      description: Observaciones
+                    escalarilla:
+                      type: string
+                      description: Escalarilla del input asociado
+                    lote:
+                      type: string
+                      description: Lote del input asociado
+                    quantity_received:
+                      type: number
+                      format: float
+                      description: Cantidad recibida en el input
+                    bull_id:
+                      type: integer
+                      description: ID del toro asociado al input
+                    user_id:
+                      type: integer
+                      description: ID del usuario propietario del input
+                    created_at:
+                      type: string
+                      format: date-time
+                      description: Fecha de creación
+                    updated_at:
+                      type: string
+                      format: date-time
+                      description: Fecha de última actualización
+        '500':
+          description: Error del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /outputs/input/{input_id}:
+    get:
+      tags:
+        - outputs
+      summary: Obtener outputs por input
+      description: Obtiene los outputs de un input específico
+      parameters:
+        - name: input_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del input
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: Número de registros a omitir
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+          description: Número máximo de registros
+      responses:
+        '200':
+          description: Lista de outputs del input
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OutputSchema'
+        '403':
+          description: No tienes permiso para ver estos outputs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Input no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /outputs/{output_id}:
+    get:
+      tags:
+        - outputs
+      summary: Obtener un output por ID
+      description: Obtiene información detallada de un output por su ID
+      parameters:
+        - name: output_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del output
+      responses:
+        '200':
+          description: Información del output
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutputSchema'
+        '403':
+          description: No tienes permiso para ver este output
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Output no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    put:
+      tags:
+        - outputs
+      summary: Actualizar un output
+      description: Actualiza información de un output existente
+      parameters:
+        - name: output_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del output
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OutputUpdate'
+      responses:
+        '200':
+          description: Output actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutputSchema'
+        '403':
+          description: No tienes permiso para actualizar este output
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Output no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    delete:
+      tags:
+        - outputs
+      summary: Eliminar un output
+      description: Elimina un output existente
+      parameters:
+        - name: output_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del output
+      responses:
+        '204':
+          description: Output eliminado exitosamente
+        '403':
+          description: No tienes permiso para eliminar este output
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Output no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Rutas de usuarios
+  /users:
+    get:
+      tags:
+        - users
+      summary: Obtener lista de usuarios
+      description: Obtiene todos los usuarios (solo admin)
+      parameters:
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: Número de registros a omitir
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+          description: Número máximo de registros
+      responses:
+        '200':
+          description: Lista de usuarios
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserSchema'
+    
+    post:
+      tags:
+        - users
+      summary: Crear un nuevo usuario
+      description: Crea un usuario con rol Client por defecto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '201':
+          description: Usuario creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSchema'
+
+  /users/filter:
+    get:
+      tags:
+        - users
+      summary: Filtrar usuarios por criterios específicos
+      description: Permite filtrar usuarios por email, nombre, número de documento y/o rol
+      parameters:
+        - name: email
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filtrar por coincidencia parcial en email
+        - name: full_name
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filtrar por coincidencia parcial en nombre completo
+        - name: number_document
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filtrar por coincidencia parcial en número de documento
+        - name: role_id
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Filtrar por ID de rol exacto
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: Número de registros a omitir
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+          description: Número máximo de registros
+      responses:
+        '200':
+          description: Lista de usuarios filtrados
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      description: ID del usuario
+                    number_document:
+                      type: string
+                      description: Número de documento del usuario
+                    type_document:
+                      type: string
+                      description: Tipo de documento
+                    specialty:
+                      type: string
+                      nullable: true
+                      description: Especialidad del usuario
+                    email:
+                      type: string
+                      description: Correo electrónico
+                    phone:
+                      type: string
+                      nullable: true
+                      description: Teléfono
+                    full_name:
+                      type: string
+                      description: Nombre completo
+                    created_at:
+                      type: string
+                      format: date-time
+                      description: Fecha de creación
+                    updated_at:
+                      type: string
+                      format: date-time
+                      description: Fecha de última actualización
+                    roles:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            description: ID del rol
+                          name:
+                            type: string
+                            description: Nombre del rol
+
+  /users/search:
+    get:
+      tags:
+        - users
+      summary: Buscar usuarios por texto general
+      description: Busca usuarios por coincidencia en email, nombre o número de documento con un solo parámetro
+      parameters:
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Texto a buscar en email, nombre o número de documento
+        - name: role_id
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Filtrar por ID de rol exacto
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: Número de registros a omitir
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+          description: Número máximo de registros
+      responses:
+        '200':
+          description: Lista de usuarios que coinciden con la búsqueda
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      description: ID del usuario
+                    number_document:
+                      type: string
+                      description: Número de documento del usuario
+                    type_document:
+                      type: string
+                      description: Tipo de documento
+                    specialty:
+                      type: string
+                      nullable: true
+                      description: Especialidad del usuario
+                    email:
+                      type: string
+                      description: Correo electrónico
+                    phone:
+                      type: string
+                      nullable: true
+                      description: Teléfono
+                    full_name:
+                      type: string
+                      description: Nombre completo
+                    created_at:
+                      type: string
+                      format: date-time
+                      description: Fecha de creación
+                    updated_at:
+                      type: string
+                      format: date-time
+                      description: Fecha de última actualización
+                    roles:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            description: ID del rol
+                          name:
+                            type: string
+                            description: Nombre del rol
+                            
+  /users/{user_id}:
+    get:
+      tags:
+        - users
+      summary: Obtener un usuario por ID
+      description: Obtiene los detalles de un usuario específico
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del usuario
+      responses:
+        '200':
+          description: Detalles del usuario
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSchema'
+        '404':
+          description: Usuario no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    put:
+      tags:
+        - users
+      summary: Actualizar un usuario
+      description: Actualiza los datos de un usuario existente
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: Usuario actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSchema'
+        '404':
+          description: Usuario no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    delete:
+      tags:
+        - users
+      summary: Eliminar un usuario
+      description: Elimina un usuario existente
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del usuario
+      responses:
+        '204':
+          description: Usuario eliminado exitosamente
+        '404':
+          description: Usuario no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /users/admin/create:
+    post:
+      tags:
+        - users
+      summary: Crear un usuario con roles específicos
+      description: Solo administradores pueden usar esta función
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateByAdmin'
+      responses:
+        '201':
+          description: Usuario creado con roles específicos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSchema'
+        '403':
+          description: Acceso denegado - solo para administradores
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /users/{user_id}/roles/{role_id}:
+    put:
+      tags:
+        - users
+        - roles
+      summary: Asignar un rol a un usuario
+      description: Solo administradores pueden asignar roles
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del usuario
+        - name: role_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del rol
+      responses:
+        '200':
+          description: Rol asignado correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Mensaje de éxito
+        '404':
+          description: Usuario o rol no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    delete:
+      tags:
+        - users
+        - roles
+      summary: Quitar un rol a un usuario
+      description: Solo administradores pueden quitar roles
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del usuario
+        - name: role_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del rol
+      responses:
+        '200':
+          description: Rol eliminado correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Mensaje de éxito
+        '404':
+          description: Usuario o rol no encontrado o el usuario no tiene ese rol
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /users/roles:
+    get:
+      tags:
+        - roles
+      summary: Obtener lista de roles
+      description: Obtiene todos los roles disponibles
+      parameters:
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: Número de registros a omitir
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+          description: Número máximo de registros
+      responses:
+        '200':
+          description: Lista de roles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RoleSchema'
+    
+    post:
+      tags:
+        - roles
+      summary: Crear un nuevo rol
+      description: Crea un nuevo rol en el sistema (solo administradores)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleCreate'
+      responses:
+        '201':
+          description: Rol creado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleSchema'
+        '403':
+          description: Acceso denegado - solo para administradores
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /roles:
+    get:
+      tags:
+        - roles
+      summary: Obtener lista de roles
+      description: Obtiene todos los roles disponibles (solo administradores)
+      parameters:
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: Número de registros a omitir
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+          description: Número máximo de registros
+      responses:
+        '200':
+          description: Lista de roles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RoleSchema'
+        '403':
+          description: Acceso denegado - solo para administradores
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    post:
+      tags:
+        - roles
+      summary: Crear un nuevo rol
+      description: Crea un nuevo rol en el sistema (solo administradores)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  description: Nombre del rol
+      responses:
+        '201':
+          description: Rol creado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleSchema'
+        '403':
+          description: Acceso denegado - solo para administradores
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /roles/{role_id}:
+    get:
+      tags:
+        - roles
+      summary: Obtener un rol por ID
+      description: Obtiene los detalles de un rol específico (solo administradores)
+      parameters:
+        - name: role_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del rol
+      responses:
+        '200':
+          description: Detalles del rol
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleSchema'
+        '404':
+          description: Rol no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    put:
+      tags:
+        - roles
+      summary: Actualizar un rol
+      description: Actualiza un rol existente (solo administradores)
+      parameters:
+        - name: role_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del rol
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  description: Nombre del rol
+      responses:
+        '200':
+          description: Rol actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleSchema'
+        '404':
+          description: Rol no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    delete:
+      tags:
+        - roles
+      summary: Eliminar un rol
+      description: Elimina un rol existente (solo administradores)
+      parameters:
+        - name: role_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del rol
+      responses:
+        '204':
+          description: Rol eliminado exitosamente
+        '404':
+          description: Rol no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /roles/assign:
+    post:
+      tags:
+        - roles
+      summary: Asignar un rol a un usuario
+      description: Asigna un rol a un usuario (solo administradores)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+                - role_id
+              properties:
+                user_id:
+                  type: integer
+                  description: ID del usuario
+                role_id:
+                  type: integer
+                  description: ID del rol
+      responses:
+        '200':
+          description: Rol asignado correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Mensaje de éxito
+        '404':
+          description: Usuario o rol no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /roles/remove:
+    post:
+      tags:
+        - roles
+      summary: Quitar un rol a un usuario
+      description: Quita un rol a un usuario (solo administradores)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+                - role_id
+              properties:
+                user_id:
+                  type: integer
+                  description: ID del usuario
+                role_id:
+                  type: integer
+                  description: ID del rol
+      responses:
+        '200':
+          description: Rol eliminado correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Mensaje de éxito
+        '404':
+          description: Usuario o rol no encontrado o el usuario no tiene ese rol
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  # Rutas para razas y sexos omitidas por brevedad, pero siguen estructura similar 
+
+  /races:
+    get:
+      tags:
+        - races
+      summary: Obtener lista de razas
+      description: Obtiene la lista de todas las razas disponibles
+      parameters:
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: Número de registros a omitir
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+          description: Número máximo de registros
+      responses:
+        '200':
+          description: Lista de razas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RaceSchema'
+        '401':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    post:
+      tags:
+        - races
+      summary: Crear una nueva raza
+      description: Crea un registro de raza nuevo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RaceCreate'
+      responses:
+        '201':
+          description: Raza creada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RaceSchema'
+        '401':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /races/{race_id}:
+    get:
+      tags:
+        - races
+      summary: Obtener una raza por ID
+      description: Obtiene información detallada de una raza por su ID
+      parameters:
+        - name: race_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID de la raza
+      responses:
+        '200':
+          description: Información de la raza
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RaceSchema'
+        '404':
+          description: Raza no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    put:
+      tags:
+        - races
+      summary: Actualizar una raza
+      description: Actualiza información de una raza existente
+      parameters:
+        - name: race_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID de la raza
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Nombre de la raza
+                description:
+                  type: string
+                  description: Descripción de la raza
+                code:
+                  type: string
+                  description: Código de la raza
+      responses:
+        '200':
+          description: Raza actualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RaceSchema'
+        '404':
+          description: Raza no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    delete:
+      tags:
+        - races
+      summary: Eliminar una raza
+      description: Elimina una raza existente
+      parameters:
+        - name: race_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID de la raza
+      responses:
+        '204':
+          description: Raza eliminada exitosamente
+        '404':
+          description: Raza no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sexes:
+    get:
+      tags:
+        - sexes
+      summary: Obtener lista de sexos
+      description: Obtiene la lista de todos los sexos disponibles
+      parameters:
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: Número de registros a omitir
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+          description: Número máximo de registros
+      responses:
+        '200':
+          description: Lista de sexos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SexSchema'
+        '401':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    post:
+      tags:
+        - sexes
+      summary: Crear un nuevo sexo
+      description: Crea un registro de sexo nuevo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SexCreate'
+      responses:
+        '201':
+          description: Sexo creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SexSchema'
+        '401':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sexes/{sex_id}:
+    get:
+      tags:
+        - sexes
+      summary: Obtener un sexo por ID
+      description: Obtiene información detallada de un sexo por su ID
+      parameters:
+        - name: sex_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del sexo
+      responses:
+        '200':
+          description: Información del sexo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SexSchema'
+        '404':
+          description: Sexo no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    put:
+      tags:
+        - sexes
+      summary: Actualizar un sexo
+      description: Actualiza información de un sexo existente
+      parameters:
+        - name: sex_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del sexo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Nombre del sexo
+                code:
+                  type: integer
+                  description: Código del sexo
+      responses:
+        '200':
+          description: Sexo actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SexSchema'
+        '404':
+          description: Sexo no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    delete:
+      tags:
+        - sexes
+      summary: Eliminar un sexo
+      description: Elimina un sexo existente
+      parameters:
+        - name: sex_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del sexo
+      responses:
+        '204':
+          description: Sexo eliminado exitosamente
+        '404':
+          description: Sexo no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /outputs:
+    get:
+      tags:
+        - outputs
+      summary: Obtener lista de outputs
+      description: Obtiene la lista de outputs con filtros opcionales
+      parameters:
+        - name: search_query
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Búsqueda general en escalarilla, lote u observaciones
+        - name: date_from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Fecha de inicio para filtrar por fecha de salida (formato ISO 8601, ej. 2023-01-01T00:00:00)
+        - name: date_to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Fecha de fin para filtrar por fecha de salida (formato ISO 8601, ej. 2023-01-31T23:59:59)
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: Número de registros a omitir (paginación)
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+          description: Número máximo de registros a devolver (paginación)
+      responses:
+        '200':
+          description: Lista de outputs con detalles del input asociado
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    output_id:
+                      type: integer
+                      description: ID del output
+                    input_id:
+                      type: integer
+                      description: ID del input asociado
+                    output_date:
+                      type: string
+                      format: date-time
+                      description: Fecha de salida
+                    quantity_output:
+                      type: number
+                      format: float
+                      description: Cantidad de salida
+                    remark:
+                      type: string
+                      nullable: true
+                      description: Observaciones
+                    escalarilla:
+                      type: string
+                      description: Escalarilla del input asociado
+                    lote:
+                      type: string
+                      description: Lote del input asociado
+                    quantity_received:
+                      type: number
+                      format: float
+                      description: Cantidad recibida en el input
+                    bull_id:
+                      type: integer
+                      description: ID del toro asociado al input
+                    user_id:
+                      type: integer
+                      description: ID del usuario propietario del input
+                    created_at:
+                      type: string
+                      format: date-time
+                      description: Fecha de creación
+                    updated_at:
+                      type: string
+                      format: date-time
+                      description: Fecha de última actualización
+        '500':
+          description: Error del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - outputs
+      summary: Crear un nuevo output
+      description: Crea un nuevo output para un input existente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - input_id
+                - quantity_output
+              properties:
+                input_id:
+                  type: integer
+                  description: ID del input al que asociar el output
+                quantity_output:
+                  type: number
+                  format: float
+                  description: Cantidad de salida
+                output_date:
+                  type: string
+                  format: date-time
+                  description: Fecha de salida (opcional, por defecto fecha actual)
+                remark:
+                  type: string
+                  nullable: true
+                  description: Observaciones
+      responses:
+        '200':
+          description: Output creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutputSchema'
+        '403':
+          description: No tienes permiso para crear este output
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Input no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error' 
