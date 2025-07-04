@@ -31,9 +31,9 @@ def get_all(
 
     # 🗓️ Filtros por fecha
     if fecha_inicio:
-        q = q.filter(ProduccionEmbrionaria.fecha >= fecha_inicio)
+        q = q.filter(ProduccionEmbrionaria.fecha_opu >= fecha_inicio)
     if fecha_fin:
-        q = q.filter(ProduccionEmbrionaria.fecha <= fecha_fin)
+        q = q.filter(ProduccionEmbrionaria.fecha_opu <= fecha_fin)
 
     # 🔍 Filtro por nombre o documento
     if query:
@@ -72,7 +72,8 @@ def create(db: Session, data: ProduccionEmbrionariaCreate):
         hora_inicio=data.hora_inicio,
         hora_final=data.hora_final,
         envase=data.envase,
-        fecha_transferencia=fecha_transferencia
+        fecha_transferencia=fecha_transferencia,
+        observacion=data.observacion
     )
 
     if data.output_ids:
@@ -154,6 +155,7 @@ def get_bulls_summary_by_produccion(db: Session, produccion_id: int):
                 "numero_registro": bull.registration_number,
                 "cantidad_semen_trabajada": 0,
                 "cantidad_total_ctv": 0,
+                "produccion_total":0,
                 "donantes": set()
             }
         # 4. Suma de quantity_output
@@ -165,6 +167,7 @@ def get_bulls_summary_by_produccion(db: Session, produccion_id: int):
         if bull_id in toro_data:
             # 5. Suma de ctv
             toro_data[bull_id]["cantidad_total_ctv"] += opus.ctv
+            toro_data[bull_id]["produccion_total"] += opus.total_embriones
             # 7. Donantes distintos
             toro_data[bull_id]["donantes"].add(opus.donante_code)
 
@@ -173,13 +176,15 @@ def get_bulls_summary_by_produccion(db: Session, produccion_id: int):
     for bull_id, data in toro_data.items():
         cantidad_semen = data["cantidad_semen_trabajada"]
         cantidad_ctv = data["cantidad_total_ctv"]
-        porcentaje = (cantidad_semen / cantidad_ctv * 100) if cantidad_ctv else 0
+        produccion_total = data["produccion_total"]
+        porcentaje = (produccion_total / cantidad_ctv * 100) if cantidad_ctv else 0
         result.append({
             "nombre_toro": data["nombre_toro"],
             "raza_toro": data["raza_toro"],
             "numero_registro": data["numero_registro"],
             "cantidad_semen_trabajada": cantidad_semen,
             "cantidad_total_ctv": cantidad_ctv,
+            "produccion_total":produccion_total,
             "porcentaje": porcentaje,
             "total_donadoras": len(data["donantes"])
         })

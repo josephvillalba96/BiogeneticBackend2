@@ -55,8 +55,6 @@ async def create_produccion_embrionaria(
     
 
 
-
-
 @router.get("/mis", response_model=List[ProduccionEmbrionariaDetail])
 async def get_my_producciones_embrionarias(
     db: Session = Depends(get_db),
@@ -78,9 +76,21 @@ async def get_my_producciones_embrionarias(
 @router.get("/", response_model=List[ProduccionEmbrionariaDetail])
 def get_all_producciones_embrionarias(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_from_token)
+    current_user: User = Depends(get_current_user_from_token),
+    query: Optional[str] = Query(None, description="Buscar por nombre, documento o correo del cliente"),
+    fecha_inicio: Optional[date] = Query(None, description="Fecha de inicio (YYYY-MM-DD)"),
+    fecha_fin: Optional[date] = Query(None, description="Fecha de fin (YYYY-MM-DD)")
 ):
-    return produccion_embrionaria_service.get_all(db=db, current_user=current_user)
+    """
+    Lista todas las producciones embrionarias con filtros opcionales por cliente y rango de fechas.
+    """
+    return produccion_embrionaria_service.get_all(
+        db=db,
+        current_user=current_user,
+        fecha_inicio=fecha_inicio,
+        fecha_fin=fecha_fin,
+        query=query
+    )
 
 
 @router.get("/{production_id}", response_model=ProduccionEmbrionariaDetail, status_code=status.HTTP_200_OK)

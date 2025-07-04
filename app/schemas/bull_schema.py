@@ -93,4 +93,28 @@ class BullDetailSchema(BaseModel):
         populate_by_name = True
         json_encoders = {
             datetime: lambda v: v.isoformat() if v else None
+        }
+
+class BullWithAvailableSamplesSchema(BaseModel):
+    id: int
+    name: str
+    registration_number: Optional[str] = None
+    race_id: int
+    race_name: Optional[str] = None
+    sex_id: int
+    sex_name: Optional[str] = None
+    status: Optional[BullStatus] = None
+    lote: Optional[str] = None
+    escalerilla: Optional[str] = None
+    description: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    total_available: int = Field(description="Cantidad total de muestras disponibles")
+    
+    class Config:
+        from_attributes = True
+        use_enum_values = True
+        populate_by_name = True
+        json_encoders = {
+            datetime: lambda v: v.isoformat() if v else None
         } 

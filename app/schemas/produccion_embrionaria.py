@@ -14,6 +14,7 @@ class ProduccionEmbrionariaBase(BaseModel):
     output_ids: Optional[List[int]] = []
     envase: str
     fecha_transferencia: date  # Calculado como fecha_opu + 7 días
+    observacion: Optional[str] = None
 
 # Crear una nueva producción embrionaria
 class ProduccionEmbrionariaCreate(ProduccionEmbrionariaBase):
@@ -29,6 +30,7 @@ class ProduccionEmbrionariaUpdate(BaseModel):
     envase: Optional[str] = None
     output_ids: Optional[List[int]] = None
     fecha_transferencia: Optional[date] = None
+    observacion: Optional[str] = None
 
     class Config:
         orm_mode = True

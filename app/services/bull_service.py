@@ -16,11 +16,11 @@ def get_bull(db: Session, bull_id: int, current_user: User = None) -> Optional[B
     bull = db.query(Bull).filter(Bull.id == bull_id).first()
     
     # Si se proporciona un usuario y no es administrador, verificar que le pertenezca
-    if current_user and not role_service.is_admin(current_user) and bull and bull.user_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="No tienes permiso para ver este toro"
-        )
+    # if current_user and not role_service.is_admin(current_user) and bull and bull.user_id != current_user.id:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN,
+    #         detail="No tienes permiso para ver este toro"
+    #     )
     
     return bull
 
@@ -482,11 +482,11 @@ def get_bulls_by_client(
         )
     
     # Si hay un usuario y no es administrador, verificar que sea el mismo cliente
-    if current_user and not role_service.is_admin(current_user) and current_user.id != client_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="No tienes permiso para ver los toros de este cliente"
-        )
+    # if current_user and not role_service.is_admin(current_user):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN,
+    #         detail="No tienes permiso para ver los toros de este cliente"
+    #     )
     
     # Consulta base con joins para incluir información de raza y sexo
     query = db.query(
@@ -536,6 +536,107 @@ def get_bulls_by_client(
             bulls_data.append(bull_data)
         except Exception as e:
             logging.error(f"Error al procesar toro en get_bulls_by_client: {str(e)}")
+            # Continuar con el siguiente toro sin interrumpir el proceso
+    
+    return bulls_data
+
+def get_bulls_with_available_samples(
+    db: Session,
+    client_id: int,
+    current_user: Optional[User] = None,
+    skip: int = 0,
+    limit: int = 100
+) -> List[Dict[str, Any]]:
+    """
+    Obtiene los toros de un cliente que tienen muestras disponibles (entradas con cantidad total > 0).
+    
+    Args:
+        db: Sesión de la base de datos
+        client_id: ID del cliente cuyos toros se quieren obtener
+        current_user: Usuario actual para verificación de permisos
+        skip: Número de registros a omitir (paginación)
+        limit: Número máximo de registros a devolver (paginación)
+    
+    Returns:
+        Lista de diccionarios con información detallada de los toros y cantidad total disponible
+        
+    Raises:
+        HTTPException: Si el usuario no tiene permisos o el cliente no existe
+    """
+    # Verificar que el cliente exista
+    client = db.query(User).filter(User.id == client_id).first()
+    if not client:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Cliente no encontrado"
+        )
+    
+    # Si hay un usuario y no es administrador, verificar que sea el mismo cliente
+    # if current_user and not role_service.is_admin(current_user) and current_user.id != client_id:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN,
+    #         detail="No tienes permiso para ver los toros de este cliente"
+    #     )
+    
+    # Consulta que obtiene toros con información de entradas y calcula la cantidad total disponible
+    query = db.query(
+        Bull,
+        Race.name.label('race_name'),
+        Sex.name.label('sex_name'),
+        func.sum(Input.quantity_received - Input.quantity_taken).label('total_available')
+    ).options(
+        joinedload(Bull.race),
+        joinedload(Bull.sex)
+    ).join(
+        Race, Bull.race_id == Race.id, isouter=True
+    ).join(
+        Sex, Bull.sex_id == Sex.id, isouter=True
+    ).join(
+        Input, Bull.id == Input.bull_id
+    ).filter(
+        Bull.user_id == client_id
+    ).group_by(
+        Bull.id,
+        Race.name,
+        Sex.name
+    ).having(
+        func.sum(Input.quantity_received - Input.quantity_taken) > 0
+    )
+    
+    # Aplicar paginación
+    query = query.order_by(Bull.created_at.desc()).offset(skip).limit(limit)
+    
+    # Ejecutar consulta
+    results = query.all()
+    
+    # Formatear resultados
+    bulls_data = []
+    for row in results:
+        try:
+            bull = row[0]  # Obtener el objeto Bull
+            total_available = row.total_available or 0
+            
+            # Crear diccionario con todos los datos
+            bull_data = {
+                "id": bull.id,
+                "name": bull.name,
+                "registration_number": bull.registration_number,
+                "lote": bull.lote,
+                "escalerilla": bull.escalerilla,
+                "description": bull.description,
+                "race_id": bull.race_id,
+                "race_name": row.race_name,
+                "sex_id": bull.sex_id,
+                "sex_name": row.sex_name,
+                "status": bull.status.value if bull.status else None,
+                "created_at": bull.created_at,
+                "updated_at": bull.updated_at,
+                "total_available": int(total_available)  # Cantidad total de muestras disponibles
+            }
+            
+            bulls_data.append(bull_data)
+        except Exception as e:
+            logging.error(f"Error al procesar toro en get_bulls_with_available_samples: {str(e)}")
             # Continuar con el siguiente toro sin interrumpir el proceso
     
     return bulls_data

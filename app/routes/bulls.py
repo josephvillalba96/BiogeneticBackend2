@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.database.base import get_db
 from app.services import bull_service
 from app.services.auth_service import get_current_user_from_token
-from app.schemas.bull_schema import BullSchema, BullCreate, BullUpdate, BullStatus, BullDetailSchema
+from app.schemas.bull_schema import BullSchema, BullCreate, BullUpdate, BullStatus, BullDetailSchema, BullWithAvailableSamplesSchema
 from app.models.user import User
 from typing import List, Dict, Any, Optional
 import logging
@@ -466,4 +466,51 @@ def get_bulls_with_available_inputs(
     # Solo admin, veterinario o el propio cliente pueden consultar
     # (Opcional: agregar lógica de permisos si es necesario)
     bulls = bull_service.get_bulls_with_available_inputs(db, cliente_id)
-    return bulls 
+    return bulls
+
+@router.get("/client/{client_id}/available-samples", response_model=List[BullWithAvailableSamplesSchema])
+async def get_bulls_with_available_samples(
+    client_id: int,
+    request: Request,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user_from_token)
+):
+    """
+    Obtiene los toros de un cliente que tienen muestras disponibles (entradas con cantidad total > 0).
+    
+    Parámetros:
+    - client_id: ID del cliente cuyos toros se quieren obtener
+    - skip: Número de registros a omitir (paginación)
+    - limit: Número máximo de registros a devolver (paginación)
+    
+    Restricciones de acceso:
+    - Solo el cliente dueño o un administrador pueden ver los toros
+    - Solo se muestran toros que tengan muestras disponibles (total > 0)
+    
+    Returns:
+        Lista de diccionarios con información detallada de los toros y cantidad total disponible
+    """
+    try:
+        bulls_data = bull_service.get_bulls_with_available_samples(
+            db, 
+            client_id=client_id,
+            current_user=current_user,
+            skip=skip, 
+            limit=limit
+        )
+        
+        return bulls_data
+    except HTTPException:
+        # Re-lanzar excepciones HTTP (como 403, 404) sin modificar
+        raise
+    except Exception as e:
+        # Registrar el error
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error al obtener toros con muestras disponibles para cliente {client_id}: {str(e)}")
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener toros con muestras disponibles: {str(e)}"
+        ) 

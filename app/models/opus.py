@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, ForeignKey, Time
+from sqlalchemy import Column, Integer, String, Date, ForeignKey, Time, Text
 from sqlalchemy.orm import relationship
 from app.models.base_model import Base, BaseModel
 from app.models.user import User
@@ -18,6 +18,7 @@ class ProduccionEmbrionaria(Base, BaseModel):
     hora_final = Column(Time, nullable=True)
     envase = Column(String(100), nullable=False)
     fecha_transferencia = Column(Date, nullable=False)  # Se debe calcular al guardar
+    observacion = Column(Text, nullable=True)  # Nuevo campo para observaciones
     
     # Relaciones
     cliente = relationship("User", back_populates="producciones_embrionarias")

@@ -32,6 +32,8 @@ class Settings(BaseSettings):
 settings = Settings()
 
 
+
+
 # DEBUG para asegurarse que cargó correctamente
 print(f"[DEBUG] .env usado: {ENV_PATH}")
 print(f"[DEBUG] AWS_ACCESS_KEY_ID: {settings.AWS_ACCESS_KEY_ID}")
