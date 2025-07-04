@@ -167,7 +167,7 @@ def get_bulls_summary_by_produccion(db: Session, produccion_id: int):
         if bull_id in toro_data:
             # 5. Suma de ctv
             toro_data[bull_id]["cantidad_total_ctv"] += opus.ctv
-            toro_data[bull_id]["produccion_total"] += opus.total_embriones
+            toro_data[bull_id]["produccion_total"] += opus.prevision
             # 7. Donantes distintos
             toro_data[bull_id]["donantes"].add(opus.donante_code)
 
