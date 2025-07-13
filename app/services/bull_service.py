@@ -631,7 +631,7 @@ def get_bulls_with_available_samples(
                 "status": bull.status.value if bull.status else None,
                 "created_at": bull.created_at,
                 "updated_at": bull.updated_at,
-                "total_available": int(total_available)  # Cantidad total de muestras disponibles
+                "total_available": float(total_available) if total_available else 0.0  # Cantidad total de muestras disponibles con precisión decimal
             }
             
             bulls_data.append(bull_data)

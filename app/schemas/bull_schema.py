@@ -109,7 +109,7 @@ class BullWithAvailableSamplesSchema(BaseModel):
     description: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
-    total_available: int = Field(description="Cantidad total de muestras disponibles")
+    total_available: float = Field(description="Cantidad total de muestras disponibles")
     
     class Config:
         from_attributes = True
