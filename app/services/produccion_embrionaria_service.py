@@ -21,7 +21,9 @@ def get_all(
     current_user: User,
     fecha_inicio: datetime = None,
     fecha_fin: datetime = None,
-    query: str = None
+    query: str = None,
+    skip: int = 0,
+    limit: int = 100
 ):
     # 🔐 Verificar si es administrador
     if not role_service.is_admin(current_user):
@@ -45,6 +47,9 @@ def get_all(
             )
         )
 
+    # 📄 Aplicar paginación y ordenamiento
+    q = q.order_by(ProduccionEmbrionaria.created_at.desc()).offset(skip).limit(limit)
+
     return q.all()
 
 
@@ -56,8 +61,12 @@ def get_by_id(db: Session, produccion_id: int):
     return produccion
 
 
-def get_by_cliente(db: Session, cliente_id: int):
-    return db.query(ProduccionEmbrionaria).filter(ProduccionEmbrionaria.cliente_id == cliente_id).all()
+def get_by_cliente(db: Session, cliente_id: int, skip: int = 0, limit: int = 100):
+    return db.query(ProduccionEmbrionaria).filter(
+        ProduccionEmbrionaria.cliente_id == cliente_id
+    ).order_by(
+        ProduccionEmbrionaria.created_at.desc()
+    ).offset(skip).limit(limit).all()
 
 
 def create(db: Session, data: ProduccionEmbrionariaCreate):
