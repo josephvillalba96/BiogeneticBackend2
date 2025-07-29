@@ -4,7 +4,7 @@
 from app.models.base_model import Base, BaseModel
 from app.models.user import User, Role, DocumentType
 from app.models.bull import Bull, Race, Sex
-from app.models.opus import Opus
+from app.models.opus import Opus, ProduccionEmbrionaria, Transferencia, ReportTransfer
 from app.models.relationships import setup_relationships
 
 # Configurar las relaciones entre modelos

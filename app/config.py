@@ -30,11 +30,4 @@ class Settings(BaseSettings):
         env_file_encoding = "utf-8"
 
 settings = Settings()
-
-
-
-# DEBUG para asegurarse que cargó correctamente
-# print(f"[DEBUG] .env usado: {ENV_PATH}")
-# print(f"[DEBUG] AWS_ACCESS_KEY_ID: {settings.AWS_ACCESS_KEY_ID}")
-# print(f"[DEBUG] AWS_SECRET_ACCESS_KEY: {settings.AWS_SECRET_ACCESS_KEY}")
-# print(f"[DEBUG] S3_BUCKET_NAME: {settings.S3_BUCKET_NAME}")
+#sin llaves, sin llaves

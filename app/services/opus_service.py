@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session, joinedload, aliased
 from app.models.opus import Opus
 from app.models.user import User
-from app.models.bull import Bull
+from app.models.bull import Bull, Race
 from app.schemas.opus_schema import OpusCreate, OpusUpdate, OpusDetail
 from app.services import role_service
 from typing import List, Optional, Dict, Any
@@ -65,16 +65,20 @@ def get_opus_by_client(
     """
     # Crear alias para las tablas de toros
     toro_bull = aliased(Bull, name='toro_bull')
+    race_rel = aliased(Race, name='race_rel')
     
     # Consulta base con joins
     query = db.query(
         Opus,
         User.full_name.label('cliente_nombre'),
-        func.coalesce(toro_bull.name, '').label('toro_nombre')
+        func.coalesce(toro_bull.name, '').label('toro_nombre'),
+        race_rel.name.label('toro_race')
     ).join(
         User, Opus.cliente_id == User.id
     ).outerjoin(
         toro_bull, Opus.toro_id == toro_bull.id
+    ).outerjoin(
+        race_rel, toro_bull.race_id == race_rel.id
     )
 
     # Aplicar filtros según el rol del usuario
@@ -98,12 +102,16 @@ def get_opus_by_client(
         opus_list = []
         for row in results:
             opus = row[0]
+            # Obtener la raza del toro desde la relación o usar la raza del registro
+            toro_race = row.toro_race if row.toro_race else opus.race
+            
             opus_data = {
                 "id": opus.id,
                 "cliente_id": opus.cliente_id,
                 "cliente_nombre": row.cliente_nombre,
                 "toro_id": opus.toro_id,
                 "toro_nombre": row.toro_nombre,
+                "toro_race": toro_race,
                 "fecha": opus.fecha,
                 "lugar": opus.lugar,
                 "finca": opus.finca,
@@ -594,40 +602,44 @@ def get_opus_by_production_for_client(
     logger.info(f"Buscando registros para la producción: {production_id} y cliente_id: {current_user.id}")
     
     try:
+        # Crear alias para las tablas
         toro_bull = aliased(Bull, name='toro_bull')
+        race_rel = aliased(Race, name='race_rel')
 
         # Consulta base
-        query = db.query(
-            Opus,
-            User.full_name.label('cliente_nombre'),
-            toro_bull.name.label('toro_nombre'),
-        ).join(
-            User, Opus.cliente_id == User.id
-        ).outerjoin(
-            toro_bull, Opus.toro_id == toro_bull.id
-        ).filter(
-            Opus.produccion_embrionaria_id == production_id
+        query = (
+            db.query(
+                Opus,
+                User.full_name.label('cliente_nombre'),
+                toro_bull.name.label('toro_nombre'),
+                race_rel.name.label('toro_race')
+            )
+            .join(User, Opus.cliente_id == User.id)
+            .outerjoin(toro_bull, Opus.toro_id == toro_bull.id)
+            .outerjoin(race_rel, toro_bull.race_id == race_rel.id)
+            .filter(Opus.produccion_embrionaria_id == production_id)
+            .order_by(Opus.order.asc())
         )
 
-        # Si no es admin, filtrar solo los registros del cliente actual
-        # if current_user. != 'admin':
-        #     query = query.filter(Opus.cliente_id == current_user.id)
-
-        results = query.order_by(Opus.order.asc()).all()
+        results = query.all()
         logger.info(f"Registros encontrados: {len(results)}")
 
         opus_list = []
         for row in results:
-            opus = row[0]
+            opus = row[0]  # El objeto Opus
+            # Obtener la raza del toro desde la relación o usar la raza del registro
+            toro_race = row.toro_race if row.toro_race else opus.race
+            
             opus_data = {
                 "id": opus.id,
                 "cliente_id": opus.cliente_id,
                 "cliente_nombre": row.cliente_nombre,
                 "toro_id": opus.toro_id,
                 "toro_nombre": row.toro_nombre,
+                "toro_race": toro_race,  # Usamos la raza del toro o la raza del registro
                 "fecha": opus.fecha,
-                "race":opus.race,
-                "donante_code":opus.donante_code,
+                "race": opus.race,
+                "donante_code": opus.donante_code,
                 "lugar": opus.lugar,
                 "finca": opus.finca,
                 "toro": opus.toro,
@@ -648,7 +660,7 @@ def get_opus_by_production_for_client(
                 "porcentaje_vtdt": opus.porcentaje_vtdt,
                 "total_embriones": opus.total_embriones,
                 "porcentaje_total_embriones": opus.porcentaje_total_embriones,
-                "produccion_embrionaria_id":opus.produccion_embrionaria_id,
+                "produccion_embrionaria_id": opus.produccion_embrionaria_id,
                 "created_at": opus.created_at,
                 "updated_at": opus.updated_at,
                 "order": opus.order
