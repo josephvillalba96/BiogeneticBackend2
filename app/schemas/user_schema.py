@@ -53,7 +53,7 @@ class UserSchema(UserBase, BaseSchema):
     roles: List[RoleSchema] = []
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class RoleUserSchema(BaseSchema):
     user_id: int

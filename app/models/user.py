@@ -37,6 +37,10 @@ class User(Base, BaseModel):
     inputs = relationship("Input", back_populates="user")
     # Producciones embrionarias asociadas a este usuario
     producciones_embrionarias = relationship("ProduccionEmbrionaria", back_populates="cliente", cascade="all, delete-orphan")
+    # Tareas del calendario donde es cliente
+    calendar_tasks_as_client = relationship("CalendarTask", foreign_keys="CalendarTask.client_id", back_populates="client")
+    # Tareas del calendario creadas por este usuario
+    calendar_tasks_created = relationship("CalendarTask", foreign_keys="CalendarTask.created_by", back_populates="creator")
     
     def __repr__(self):
         return f"<User {self.email}>" 

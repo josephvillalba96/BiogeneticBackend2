@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, ForeignKey, Time, Text
+from sqlalchemy import Column, Integer, String, Date, ForeignKey, Time, Text, Boolean
 from sqlalchemy.orm import relationship
 from app.models.base_model import Base, BaseModel
 from app.models.user import User
@@ -24,6 +24,7 @@ class ProduccionEmbrionaria(Base, BaseModel):
     cliente = relationship("User", back_populates="producciones_embrionarias")
     opus = relationship("Opus", back_populates="produccion_embrionaria", cascade="all, delete-orphan")
     outputs = relationship("Output", secondary="produccion_embrionaria_output", back_populates="producciones_embrionarias")
+    transferencias = relationship("Transferencia", back_populates="produccion_embrionaria", cascade="all, delete-orphan")
 
 
 
@@ -68,4 +69,41 @@ class Opus(Base, BaseModel):
 
     def __repr__(self):
         return f"<Opus(id={self.id}, cliente_id={self.cliente_id}, fecha={self.fecha})>"
+
+
+class Transferencia(Base, BaseModel):
+    __tablename__ = "transferencias"
+
+    id = Column(Integer, primary_key=True, index=True)
+    fecha_transferencia = Column(Date, nullable=False)
+    veterinario_responsable = Column(String(100), nullable=False)
+    fecha = Column(Date, nullable=False)
+    lugar = Column(String(100), nullable=False)
+    finca = Column(String(100), nullable=False)
+    observacion = Column(Text, nullable=True)
+    produccion_embrionaria_id = Column(Integer, ForeignKey("produccion_embrionaria.id"), nullable=False)
+    cliente_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    initial_report = Column(Boolean, nullable=False, default=True)
+
+    produccion_embrionaria = relationship("ProduccionEmbrionaria", back_populates="transferencias")
+    cliente = relationship("User")
+    reportes = relationship("ReportTransfer", back_populates="transferencia", cascade="all, delete-orphan")
+
+class ReportTransfer(Base, BaseModel):
+    __tablename__ = "report_transfers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    donadora = Column(String(100), nullable=False)
+    raza_donadora = Column(String(100), nullable=False)
+    toro = Column(String(100), nullable=False)
+    toro_raza = Column(String(100), nullable=False)
+    estado = Column(String(100), nullable=False)
+    receptora = Column(String(100), nullable=False)
+    horario = Column(String(100), nullable=False)
+    dx = Column(String(100), nullable=False)
+    dxx = Column(String(100), nullable=False)
+    dxxx = Column(String(100), nullable=False)
+    transferencia_id = Column(Integer, ForeignKey("transferencias.id"), nullable=False)
+
+    transferencia = relationship("Transferencia", back_populates="reportes")
 

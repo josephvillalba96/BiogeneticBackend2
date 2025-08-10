@@ -4,8 +4,9 @@
 from app.models.base_model import Base, BaseModel
 from app.models.user import User, Role, DocumentType
 from app.models.bull import Bull, Race, Sex
-from app.models.opus import Opus
+from app.models.opus import Opus, ProduccionEmbrionaria, Transferencia, ReportTransfer
 from app.models.relationships import setup_relationships
+from app.models.calendar import CalendarTask, CalendarTaskType, CalendarTemplate, CalendarTemplateTask
 
 # Configurar las relaciones entre modelos
 setup_relationships()
@@ -20,7 +21,11 @@ __all__ = [
     'Bull',
     'Race',
     'Sex',
-    'Opus'
+    'Opus',
+    'CalendarTask',
+    'CalendarTaskType',
+    'CalendarTemplate',
+    'CalendarTemplateTask'
 ]
 
 # Función para verificar si los modelos están correctamente mapeados
@@ -31,5 +36,9 @@ def verify_all_models():
         "Bull": Bull.__table__,
         "Race": Race.__table__,
         "Sex": Sex.__table__,
-        "Opus": Opus.__table__
+        "Opus": Opus.__table__,
+        "CalendarTask": CalendarTask.__table__,
+        "CalendarTaskType": CalendarTaskType.__table__,
+        "CalendarTemplate": CalendarTemplate.__table__,
+        "CalendarTemplateTask": CalendarTemplateTask.__table__
     } 

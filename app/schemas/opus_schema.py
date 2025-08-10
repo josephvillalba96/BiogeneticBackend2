@@ -77,6 +77,7 @@ class OpusInDB(OpusBase):
     id: int
     created_at: datetime
     updated_at: datetime
+    toro_race: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -84,6 +85,7 @@ class OpusInDB(OpusBase):
 class OpusDetail(OpusInDB):
     cliente_nombre: str
     toro_nombre: str
+    toro_race: Optional[str] = None
 
     class Config:
         orm_mode = True
@@ -102,4 +104,5 @@ class OpusDateSummary(BaseModel):
 
 class OpusDateDetail(OpusDetail):
     """Esquema para mostrar detalles de Opus por fecha"""
+    toro_race: Optional[str] = None
     pass
