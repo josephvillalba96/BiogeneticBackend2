@@ -29,7 +29,7 @@ router = APIRouter(
 # RUTAS PARA CALENDAR TASK TYPE
 # ============================================================================
 
-@router.get("/task-types/", response_model=CalendarTaskTypeListResponse)
+@router.get("/task-types", response_model=CalendarTaskTypeListResponse)
 async def get_calendar_task_types(
     skip: int = 0, 
     limit: int = 100,
@@ -64,7 +64,7 @@ async def get_calendar_task_type(
         )
     return task_type
 
-@router.post("/task-types/", response_model=CalendarTaskTypeSchema, status_code=status.HTTP_201_CREATED)
+@router.post("/task-types", response_model=CalendarTaskTypeSchema, status_code=status.HTTP_201_CREATED)
 async def create_calendar_task_type(
     task_type: CalendarTaskTypeCreate,
     db: Session = Depends(get_db),
@@ -108,7 +108,7 @@ async def delete_calendar_task_type(
 # RUTAS PARA CALENDAR TEMPLATE
 # ============================================================================
 
-@router.get("/templates/", response_model=CalendarTemplateListResponse)
+@router.get("/templates", response_model=CalendarTemplateListResponse)
 async def get_calendar_templates(
     skip: int = 0, 
     limit: int = 100,
@@ -157,7 +157,7 @@ async def get_calendar_template(
         )
     return template
 
-@router.post("/templates/", response_model=CalendarTemplateSchema, status_code=status.HTTP_201_CREATED)
+@router.post("/templates", response_model=CalendarTemplateSchema, status_code=status.HTTP_201_CREATED)
 async def create_calendar_template(
     template: CalendarTemplateCreate,
     db: Session = Depends(get_db),
@@ -201,7 +201,7 @@ async def delete_calendar_template(
 # RUTAS PARA CALENDAR TEMPLATE TASK
 # ============================================================================
 
-@router.get("/template-tasks/", response_model=List[CalendarTemplateTaskSchema])
+@router.get("/template-tasks", response_model=List[CalendarTemplateTaskSchema])
 async def get_calendar_template_tasks(
     template_id: Optional[int] = None,
     skip: int = 0, 
@@ -230,7 +230,7 @@ async def get_calendar_template_task(
         )
     return template_task
 
-@router.post("/template-tasks/", response_model=CalendarTemplateTaskSchema, status_code=status.HTTP_201_CREATED)
+@router.post("/template-tasks", response_model=CalendarTemplateTaskSchema, status_code=status.HTTP_201_CREATED)
 async def create_calendar_template_task(
     template_task: CalendarTemplateTaskCreate,
     db: Session = Depends(get_db),
@@ -274,7 +274,7 @@ async def delete_calendar_template_task(
 # RUTAS PARA CALENDAR TASK
 # ============================================================================
 
-@router.get("/tasks/", response_model=CalendarTaskListResponse)
+@router.get("/tasks", response_model=CalendarTaskListResponse)
 async def get_calendar_tasks(
     skip: int = 0, 
     limit: int = 100,
@@ -331,7 +331,7 @@ async def get_calendar_tasks_by_date(
     tasks = calendar_service.get_calendar_tasks_by_date(db, date)
     return tasks
 
-@router.get("/tasks/date-range/", response_model=List[CalendarTaskSchema])
+@router.get("/tasks/date-range", response_model=List[CalendarTaskSchema])
 async def get_calendar_tasks_by_date_range(
     start_date: date,
     end_date: date,
@@ -345,7 +345,7 @@ async def get_calendar_tasks_by_date_range(
     )
     return tasks
 
-@router.get("/tasks/search/", response_model=CalendarTaskListResponse)
+@router.get("/tasks/search", response_model=CalendarTaskListResponse)
 async def search_calendar_tasks(
     q: Optional[str] = None,
     client_id: Optional[int] = None,
@@ -473,7 +473,7 @@ async def delete_calendar_task(
 # RUTAS ESPECIALES
 # ============================================================================
 
-@router.post("/tasks/from-template/", response_model=List[CalendarTaskSchema], status_code=status.HTTP_201_CREATED)
+@router.post("/tasks/from-template", response_model=List[CalendarTaskSchema], status_code=status.HTTP_201_CREATED)
 async def create_tasks_from_template(
     template_id: int,
     client_id: int,
