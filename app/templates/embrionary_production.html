@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informe de Producción - {{ production.finca }} - {{ production.fecha_opu }}</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        /* Estilos generales optimizados para impresión */
+        @page {
+            size: letter;
+            margin: 0.5in;
+        }
+        
+        @media print {
+            body {
+                width: 8.5in;
+                height: 11in;
+                margin: 0;
+                padding: 0;
+                font-size: 11px;
+            }
+            
+            .no-print {
+                display: none !important;
+            }
+            
+            .container {
+                width: 100%;
+                max-width: 100%;
+                padding: 0;
+                margin: 0;
+            }
+            
+            .card {
+                border: 1px solid #ddd;
+                page-break-inside: avoid;
+            }
+            
+            table {
+                page-break-inside: avoid;
+            }
+            
+            .chart-container {
+                page-break-inside: avoid;
+            }
+            
+            /* Ajustes específicos para encajar en carta */
+            .data-table {
+                font-size: 8px;
+            }
+            .data-table th, .data-table td {
+                padding: 1.5px;
+            }
+            .container {
+                padding: 0.15in;
+            }
+            .summary-table { font-size: 8px; }
+            .summary-table th, .summary-table td { padding: 1.5px; }
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.4;
+            color: #000;
+            background-color: #fff;
+            margin: 0;
+            padding: 15px;
+        }
+        
+        .container {
+            width: 8.5in;
+            min-height: 11in;
+            margin: 0 auto;
+            padding: 0.2in;
+            box-sizing: border-box;
+            background-color: white;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+        
+        .header h1 {
+            font-size: 18px;
+            margin: 0;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 12px;
+        }
+        
+        .info-table th, .info-table td {
+            border: 1px solid #000;
+            padding: 5px;
+            text-align: center;
+        }
+        
+        .info-table th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+            font-size: 9px;
+            page-break-inside: avoid;
+            table-layout: fixed; /* distribuir ancho uniformemente */
+        }
+        
+        .data-table th, .data-table td {
+            border: 1px solid #000;
+            padding: 2px; /* reducir padding para más contenido por línea */
+            text-align: center;
+            word-break: break-word; /* permitir salto de palabra */
+            hyphens: auto;
+        }
+        
+        .data-table th {
+            background-color: #e0e0e0;
+            font-weight: bold;
+        }
+        
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+            font-size: 9px;            
+            table-layout: fixed; /* asegurar ancho uniforme */
+        }
+        
+        .summary-table th, .summary-table td {
+            border: 1px solid #000;
+            padding: 2px; /* compactar */
+            text-align: center;
+            word-break: break-word;
+            hyphens: auto;
+            white-space: normal;
+        }
+        
+        .summary-table th {
+            background-color: #d0d0d0;
+            font-weight: bold;
+        }
+        
+        .chart-container {
+            width: 100%;
+            height: 300px;
+            margin: 20px 0;
+            page-break-inside: avoid;
+        }
+        
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin: 15px 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #000;
+        }
+        
+        .observations {
+            margin: 15px 0;
+            padding: 10px;
+            border: 1px solid #000;
+            background-color: #f9f9f9;
+            font-size: 12px;
+        }
+        
+        .totals-row {
+            font-weight: bold;
+            background-color: #f0f0f0;
+        }
+        
+        .button-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .btn {
+            padding: 8px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn:hover {
+            background-color: #45a049;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .text-left {
+            text-align: left;
+        }
+        
+        .bg-red {
+            background-color: #ffcccc;
+            color: #000;
+        }
+        
+        .bg-blue {
+            background-color: #cce5ff;
+            color: #000;
+        }
+        
+        .bg-green {
+            background-color: #d4edda;
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="report-content">
+        <!-- Encabezado -->
+        <div class="header">
+            <h1>INFORME PRODUCCIÓN DE EMBRIONES BOVINOS OPU/FIV - BIOGENETIC IN-VITRO SAS</h1>
+        </div>
+        
+        <!-- Información general -->
+        <table class="info-table">
+            <tr>
+                <th>CLIENTE</th>
+                <td>{{ production.cliente.full_name }}</td>
+                <th>LUGAR</th>
+                <td>{{ production.lugar }}</td>
+                <th>HORA INICIO OPU</th>
+                <td>{{ production.hora_inicio }}</td>
+                <th>ENVASE</th>
+                <td>{{ production.envase }}</td>
+            </tr>
+            <tr>
+                <th>FECHA OPU</th>
+                <td>{{ production.fecha_opu }}</td>
+                <th>FINCA</th>
+                <td>{{ production.finca }}</td>
+                <th>HORA FINAL OPU</th>
+                <td>{{ production.hora_final }}</td>
+                <th>FECHA DE TRANSFERENCIA</th>
+                <td>{{ transfer_date }}</td>
+            </tr>
+        </table>
+        
+        <!-- Tabla de datos principales -->
+        <div class="section-title">DATOS DE PRODUCCIÓN</div>
+        <div style="overflow-x: auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>N°</th>
+                        <th>DONANTES</th>
+                        <th>RAZA</th>
+                        <th>TOROS</th>
+                        <th colspan="3" class="text-center">OOCITOS VIABLES</th>
+                        <th>VIABLES</th>
+                        <th>OTROS</th>
+                        <th>TOTAL</th>
+                        <th>CIV</th>
+                        <th>CLIVADOS</th>
+                        <th>% CLIV.</th>
+                        <th class="bg-red">PREVISIÓN</th>
+                        <th>% PREV</th>
+                        <th class="bg-blue">EMPAQUE</th>
+                        <th>% EMP</th>
+                        <th class="bg-green">VT/DT</th>
+                        <th>% VT/DT</th>
+                        <th>TOTAL</th>
+                        <th>%</th>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th>GI</th>
+                        <th>GII</th>
+                        <th>GIII</th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for registro in registros %}
+                    <tr>
+                        <td class="text-center">{{ loop.index }}</td>
+                        <td class="text-center">{{ registro.donante_code }}</td>
+                        <td class="text-center">{{ registro.race }}</td>
+                        <td class="text-center">{{ registro.toro_nombre }}</td>
+                        <td class="text-center">{{ registro.gi }}</td>
+                        <td class="text-center">{{ registro.gii }}</td>
+                        <td class="text-center">{{ registro.giii }}</td>
+                        <td class="text-center">{{ registro.viables }}</td>
+                        <td class="text-center">{{ registro.otros }}</td>
+                        <td class="text-center">{{ registro.total_oocitos }}</td>
+                        <td class="text-center">{{ registro.ctv }}</td>
+                        <td class="text-center">{{ registro.clivados }}</td>
+                        <td class="text-center">{{ registro.porcentaje_cliv }}</td>
+                        <td class="text-center">{{ registro.prevision }}</td>
+                        <td class="text-center">{{ registro.porcentaje_prevision }}</td>
+                        <td class="text-center">{{ registro.empaque }}</td>
+                        <td class="text-center">{{ registro.porcentaje_empaque }}</td>
+                        <td class="text-center">{{ registro.vt_dt }}</td>
+                        <td class="text-center">{{ registro.porcentaje_vtdt }}</td>
+                        <td class="text-center">{{ registro.prevision }}</td>
+                        <td class="text-center">{{ ((registro.prevision * 100) / (registro.ctv if registro.ctv > 0 else 1)) | round | int }}%</td>
+                    </tr>
+                    {% endfor %}
+                    <!-- Fila de totales -->
+                    <tr class="totals-row">
+                        <td colspan="4" class="text-center">Totales</td>
+                        <td class="text-center">{{ totales.gi }}</td>
+                        <td class="text-center">{{ totales.gii }}</td>
+                        <td class="text-center">{{ totales.giii }}</td>
+                        <td class="text-center">{{ totales.viables }}</td>
+                        <td class="text-center">{{ totales.otros }}</td>
+                        <td class="text-center">{{ totales.total_oocitos }}</td>
+                        <td class="text-center">{{ totales.ctv }}</td>
+                        <td class="text-center">{{ totales.clivados }}</td>
+                        <td class="text-center">{{ ((totales.clivados * 100) / (totales.ctv if totales.ctv > 0 else 1)) | round | int }}%</td>
+                        <td class="text-center">{{ totales.prevision }}</td>
+                        <td class="text-center">{{ ((totales.prevision * 100) / (totales.ctv if totales.ctv > 0 else 1)) | round | int }}%</td>
+                        <td class="text-center">{{ totales.empaque }}</td>
+                        <td class="text-center">{{ ((totales.empaque * 100) / (totales.ctv if totales.ctv > 0 else 1)) | round | int }}%</td>
+                        <td class="text-center">{{ totales.vt_dt }}</td>
+                        <td class="text-center">{{ ((totales.vt_dt * 100) / (totales.ctv if totales.ctv > 0 else 1)) | round | int }}%</td>
+                        <td class="text-center">{{ totales.prevision }}</td>
+                        <td class="text-center">{{ ((totales.prevision * 100) / (totales.ctv if totales.ctv > 0 else 1)) | round | int }}%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Observaciones -->
+        {% if production.observacion and production.observacion.strip() %}
+        <div class="section-title">OBSERVACIONES</div>
+        <div class="observations">
+            {{ production.observacion }}
+        </div>
+        {% endif %}
+        
+        <!-- Resumen de toros -->
+        {% if resumen_toros and resumen_toros|length > 0 %}
+        <div class="section-title">RESUMEN DE SALIDAS DE SEMEN</div>
+        <table class="summary-table">
+            <thead>
+                <tr>
+                    <th>Toro</th>
+                    <th>Raza</th>
+                    <th>Registro</th>
+                    <th>Cantidad trabajada</th>
+                    <th>#N° Donantes</th>
+                    <th>Cultivados</th>
+                    <th>Producción total</th>
+                    <th>%</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for toro in resumen_toros %}
+                <tr>
+                    <td class="text-center">{{ toro.toro_nombre }}</td>
+                    <td class="text-center">{{ toro.race }}</td>
+                    <td class="text-center">{{ toro.numero_registro }}</td>
+                    <td class="text-center">{{ "%.2f"|format(toro.cantidad_semen_trabajada|float) }}</td>
+                    <td class="text-center">{{ toro.total_donadoras }}</td>
+                    <td class="text-center">{{ "%.2f"|format(toro.cantidad_total_ctv|float) }}</td>
+                    <td class="text-center">{{ toro.produccion_total }}</td>
+                    <td class="text-center">{{ "%.2f"|format(toro.porcentaje|float) }}%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+        
+        <!-- Información de muestra -->
+        {% if muestra_info %}
+        <div class="section-title">INFORMACIÓN DE LA MUESTRA UTILIZADA</div>
+        <table class="info-table">
+            <tr>
+                <th>Toro:</th>
+                <td colspan="3">{{ muestra_info.toro.name }} (Registro: {{ muestra_info.toro.register }})</td>
+            </tr>
+            <tr>
+                <th>Raza:</th>
+                <td colspan="3">{{ muestra_info.toro.razaNombre or muestra_info.toro.race_name or muestra_info.toro.race_id }}</td>
+            </tr>
+            <tr>
+                <th>Cantidad utilizada:</th>
+                <td>{{ muestra_info.output.quantity_output }}</td>
+                <th>Cantidad recibida:</th>
+                <td>{{ muestra_info.input.quantity_received }}</td>
+            </tr>
+            <tr>
+                <th>Cantidad disponible:</th>
+                <td>{{ muestra_info.input.total }}</td>
+                <th>Fecha de la muestra:</th>
+                <td>{{ muestra_info.input.created_at[:10] if muestra_info.input.created_at else 'N/A' }}</td>
+            </tr>
+            {% if muestra_info.output.remark %}
+            <tr>
+                <th>Observaciones:</th>
+                <td colspan="3">{{ muestra_info.output.remark }}</td>
+            </tr>
+            {% endif %}
+        </table>
+        {% endif %}
+        
+        <!-- Gráficos -->
+        <div class="section-title">GRÁFICOS DE COMPARATIVA</div>
+        <div class="chart-container">
+            <canvas id="comparisonChart"></canvas>
+        </div>
+        <div class="text-center" id="chart-fallback" style="font-size: 12px; color: #666; display:none;">Sin datos suficientes para graficar</div>
+    </div>
+    
+    <script>
+        // Función para formatear los porcentajes
+        function formatPercentage(value) {
+            if (typeof value === 'string') {
+                return parseFloat(value.replace('%', ''));
+            }
+            return value;
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                // Preparar datos para el gráfico (sin bloques de plantilla dentro de JS)
+                const registrosData = JSON.parse('{{ registros | tojson | safe }}');
+                const labels = (registrosData || []).map(r => {
+                    const toro = (r.toro_nombre ?? "").trim();
+                    const donante = (r.donante_code ?? "").trim();
+                    if (toro && donante) return `${toro} - ${donante}`;
+                    return toro || donante || "";
+                });
+                const clivadosData = (registrosData || []).map(r => Number(formatPercentage(r.porcentaje_cliv ?? 0)) || 0);
+                const totalData = (registrosData || []).map(r => Number(formatPercentage(r.porcentaje_prevision ?? 0)) || 0);
+
+                const ctx = document.getElementById('comparisonChart');
+                if (!ctx) return;
+                if (typeof Chart === 'undefined') {
+                    const fb = document.getElementById('chart-fallback');
+                    if (fb) {
+                        fb.textContent = 'No se pudo cargar la librería de gráficos';
+                        fb.style.display = 'block';
+                    }
+                    return;
+                }
+                // Desactivar animaciones para que el PDF capture el render inmediatamente
+                Chart.defaults.animation = false;
+                if (!labels.length) {
+                    document.getElementById('chart-fallback').style.display = 'block';
+                    return;
+                }
+                const comparisonChart = new Chart(ctx.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: '% Clivados',
+                                data: clivadosData,
+                                backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                            },
+                            {
+                                label: '% Total Producción',
+                                data: totalData,
+                                backgroundColor: 'rgba(44, 44, 160, 0.8)',
+                            }
+                        ]
+                    },
+                    options: {
+                        animation: false,
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                ticks: { maxRotation: 45, minRotation: 45 }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                title: { display: true, text: 'Porcentaje (%)' }
+                            }
+                        },
+                        plugins: {
+                            legend: { position: 'top' },
+                            title: {
+                                display: true,
+                                text: 'Comparativa % Clivados vs % Total Producción por Donante'
+                            }
+                        },
+                        datasets: {
+                            bar: { maxBarThickness: 28 }
+                        }
+                    }
+                });
+                window.chartReady = true;
+            } catch (e) {
+                console && console.error && console.error('Error creando gráfico:', e);
+            }
+        });
+        
+        // Función para generar PDF
+        function generatePDF() {
+            const element = document.getElementById('report-content');
+            const opt = {
+                margin: 0.5,
+                filename: 'informe_produccion.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+            
+            html2pdf().set(opt).from(element).save();
+        }
+        
+        // Ajustar el gráfico al tamaño del contenedor
+        window.addEventListener('resize', function() {
+            comparisonChart.resize();
+        });
+    </script>
+</body>
+</html>

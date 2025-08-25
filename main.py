@@ -10,6 +10,8 @@ from fastapi.openapi.utils import get_openapi
 from app.utils.security import AuthenticationMiddleware
 from fastapi.responses import HTMLResponse
 import logging
+import os
+import asyncio
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -18,6 +20,13 @@ logger = logging.getLogger(__name__)
 # No crear las tablas automáticamente al iniciar la aplicación
 # ya que esto lo manejamos con Alembic
 # Base.metadata.create_all(bind=engine)
+
+# Ajuste Windows: habilitar ProactorEventLoop para soporte de subprocess (Playwright)
+try:
+    if os.name == "nt" and hasattr(asyncio, "WindowsProactorEventLoopPolicy"):
+        asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+except Exception as _e:
+    logging.getLogger(__name__).warning(f"No se pudo ajustar WindowsProactorEventLoopPolicy: {_e}")
 
 # Verificar que todos los modelos estén mapeados correctamente
 verify_all_models()
