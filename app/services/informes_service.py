@@ -3,10 +3,13 @@ from typing import Dict, Any, List, Optional
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 import json
 import os
+from datetime import datetime, timedelta, date
+from fastapi import HTTPException
 
 from app.models.opus import ProduccionEmbrionaria, Opus
 from app.models.bull import Bull
 from app.models.user import User
+from app.schemas.opus_schema import OpusSchema
 
 
 def _get_templates_env() -> Environment:
@@ -17,7 +20,13 @@ def _get_templates_env() -> Environment:
         enable_async=False,
     )
     # Añadir filtro tojson para compatibilidad con plantilla
-    env.filters["tojson"] = lambda obj: json.dumps(obj, ensure_ascii=False)
+    def json_serializer(obj):
+        """Serializador personalizado para JSON que maneja objetos date y datetime"""
+        if isinstance(obj, (date, datetime)):
+            return obj.strftime('%d/%m/%Y')
+        raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
+    
+    env.filters["tojson"] = lambda obj: json.dumps(obj, ensure_ascii=False, default=json_serializer)
     return env
 
 
@@ -30,37 +39,58 @@ def fetch_produccion_context(
     Obtiene la Producción Embrionaria y construye el contexto requerido por la plantilla
     embrionary_production.html (production, registros, totales, resumen_toros, muestra_info, transfer_date, current_user).
     """
-    production: Optional[ProduccionEmbrionaria] = (
+    produccion_db = (
         db.query(ProduccionEmbrionaria)
         .filter(ProduccionEmbrionaria.id == produccion_id)
         .first()
     )
-    if production is None:
-        raise ValueError("Producción embrionaria no encontrada")
+    if not produccion_db:
+        raise HTTPException(status_code=404, detail="Producción no encontrada")
 
-    # Cargar registros Opus asociados
-    opus_registros: List[Opus] = (
-        db.query(Opus)
-        .filter(Opus.produccion_embrionaria_id == produccion_id)
-        # MySQL no soporta NULLS FIRST; emulación: NULL primero, luego valor, luego id
-        .order_by((Opus.order == None).desc(), Opus.order.asc(), Opus.id.asc())
-        .all()
-    )
+    cliente = produccion_db.cliente
+    registros_orm = db.query(Opus).filter(Opus.produccion_embrionaria_id == produccion_id).order_by((Opus.order == None).desc(), Opus.order.asc()).all()
 
-    # Construir mapa de toros por id para completar nombres faltantes
-    toro_ids = {r.toro_id for r in opus_registros if getattr(r, "toro_id", None)}
-    bull_by_id: Dict[int, Dict[str, Any]] = {}
-    if toro_ids:
-        for bid, bname, breg in (
-            db.query(Bull.id, Bull.name, Bull.registration_number)
-            .filter(Bull.id.in_(toro_ids))
-            .all()
-        ):
-            bull_by_id[int(bid)] = {"name": bname or "", "registration_number": breg or ""}
+    registros_schema = [OpusSchema.from_orm(r) for r in registros_orm]
 
-    # Adaptar registros para la plantilla
-    registros: List[Dict[str, Any]] = []
-    totales: Dict[str, Any] = {
+    for registro in registros_schema:
+        if not registro.toro_nombre:
+            toro_db = db.query(Bull).filter(Bull.id == registro.toro_id).first()
+            if toro_db:
+                registro.toro_nombre = toro_db.name
+                registro.race = toro_db.race.name if toro_db.race else "N/A"
+
+    resumen_toros = {}
+    for r in registros_schema:
+        if r.toro_nombre not in resumen_toros:
+            resumen_toros[r.toro_nombre] = {
+                'toro_nombre': r.toro_nombre,
+                'race': r.race,
+                'numero_registro': r.donante_code,
+                'cantidad_semen_trabajada': 0.0,
+                'total_donadoras': 0,
+                'cantidad_total_ctv': 0.0,
+                'produccion_total': 0,
+                'porcentaje': 0.0,
+                'total_embriones': 0,
+                'total_oocitos': 0
+            }
+        resumen_toros[r.toro_nombre]['total_embriones'] += r.total_embriones
+        resumen_toros[r.toro_nombre]['total_oocitos'] += r.total_oocitos
+        resumen_toros[r.toro_nombre]['total_donadoras'] += 1
+        resumen_toros[r.toro_nombre]['cantidad_total_ctv'] += r.ctv
+        resumen_toros[r.toro_nombre]['produccion_total'] += r.prevision
+
+    # Calcular porcentajes para cada toro
+    for toro_data in resumen_toros.values():
+        if toro_data['cantidad_total_ctv'] > 0:
+            toro_data['porcentaje'] = round((toro_data['produccion_total'] / toro_data['cantidad_total_ctv']) * 100, 2)
+        else:
+            toro_data['porcentaje'] = 0.0
+    
+    resumen_toros = list(resumen_toros.values())
+    
+    # Calcular totales para la plantilla
+    totales = {
         "gi": 0,
         "gii": 0,
         "giii": 0,
@@ -73,33 +103,8 @@ def fetch_produccion_context(
         "empaque": 0,
         "vt_dt": 0,
     }
-
-    for r in opus_registros:
-        toro_nombre_val = (r.toro or "").strip()
-        if not toro_nombre_val and getattr(r, "toro_id", None) in bull_by_id:
-            toro_nombre_val = bull_by_id[r.toro_id]["name"]
-        registros.append({
-            "donante_code": r.donante_code,
-            "race": r.race,
-            "toro_nombre": toro_nombre_val,
-            "gi": r.gi,
-            "gii": r.gii,
-            "giii": r.giii,
-            "viables": r.viables,
-            "otros": r.otros,
-            "total_oocitos": r.total_oocitos,
-            "ctv": r.ctv,
-            "clivados": r.clivados,
-            "porcentaje_cliv": r.porcentaje_cliv,
-            "prevision": r.prevision,
-            "porcentaje_prevision": r.porcentaje_prevision,
-            "empaque": r.empaque,
-            "porcentaje_empaque": r.porcentaje_empaque,
-            "vt_dt": r.vt_dt or 0,
-            "porcentaje_vtdt": r.porcentaje_vtdt or "0",
-        })
-
-        # Sumar totales
+    
+    for r in registros_schema:
         totales["gi"] += r.gi
         totales["gii"] += r.gii
         totales["giii"] += r.giii
@@ -111,52 +116,42 @@ def fetch_produccion_context(
         totales["prevision"] += r.prevision
         totales["empaque"] += r.empaque
         totales["vt_dt"] += (r.vt_dt or 0)
-
-    # Derivar porcentajes agregados a partir de totales
+    
+    # Calcular porcentajes agregados
     def pct(numer: int, denom: int) -> int:
         return int(round((numer * 100) / (denom if denom > 0 else 1)))
-
+    
     totales["porcentaje_cliv"] = f"{pct(totales['clivados'], totales['ctv'])}%"
     totales["porcentaje_prevision"] = f"{pct(totales['prevision'], totales['ctv'])}%"
     totales["porcentaje_empaque"] = f"{pct(totales['empaque'], totales['ctv'])}%"
     totales["porcentaje_vtdt"] = f"{pct(totales['vt_dt'], totales['ctv'])}%"
+    
+    # Realizar cálculos adicionales para el resumen
+    total_oocitos = sum(r.total_oocitos for r in registros_schema) if registros_schema else 0
+    total_clivados = sum(r.clivados for r in registros_schema) if registros_schema else 0
+    total_embriones = sum(r.total_embriones for r in registros_schema) if registros_schema else 0
+    promedio_porcentaje_cliv = (total_clivados / total_oocitos * 100) if total_oocitos > 0 else 0
+    promedio_porcentaje_total_embriones = (total_embriones / total_oocitos * 100) if total_oocitos > 0 else 0
 
-    # Resumen de toros básico a partir de Opus
-    resumen_toros: List[Dict[str, Any]] = []
-    by_toro: Dict[str, Dict[str, Any]] = {}
-    for r in opus_registros:
-        key_val = (r.toro or "").strip()
-        if not key_val and getattr(r, "toro_id", None) in bull_by_id:
-            key_val = bull_by_id[r.toro_id]["name"]
-        key = key_val
-        if key not in by_toro:
-            by_toro[key] = {
-                "toro_nombre": key_val,
-                "race": r.race,
-                # Si existe registro del toro lo usamos, si no dejamos el donante_code
-                "numero_registro": bull_by_id.get(getattr(r, "toro_id", None), {}).get("registration_number") or getattr(r, "donante_code", ""),
-                "cantidad_semen_trabajada": 0.0,
-                "total_donadoras": 0,
-                "cantidad_total_ctv": 0.0,
-                "produccion_total": 0,
-                "porcentaje": 0.0,
-            }
-        by_toro[key]["total_donadoras"] += 1
-        by_toro[key]["cantidad_total_ctv"] += r.ctv
-        by_toro[key]["produccion_total"] += r.prevision
-    for v in by_toro.values():
-        v["porcentaje"] = pct(int(v["produccion_total"]), int(v["cantidad_total_ctv"]))
-        resumen_toros.append(v)
+    fecha_transferencia = None
+    if produccion_db.fecha_opu:
+        fecha_transferencia = produccion_db.fecha_opu + timedelta(days=8)
 
-    context: Dict[str, Any] = {
-        "production": production,
-        "current_user": current_user,
-        "transfer_date": production.fecha_transferencia,
-        "registros": registros,
+    context = {
+        "production": produccion_db,
+        "cliente": cliente,
+        "registros": [r.model_dump() for r in registros_schema], # Ahora se convierte a dict
         "totales": totales,
         "resumen_toros": resumen_toros,
-        "muestra_info": None,  # Opcional; no siempre disponible
+        "total_oocitos": total_oocitos,
+        "total_clivados": total_clivados,
+        "total_embriones": total_embriones,
+        "promedio_porcentaje_cliv": f"{promedio_porcentaje_cliv:.2f}%",
+        "promedio_porcentaje_total_embriones": f"{promedio_porcentaje_total_embriones:.2f}%",
+        "current_date": datetime.now().strftime("%d/%m/%Y"),
+        "fecha_transferencia": fecha_transferencia.strftime("%d/%m/%Y") if fecha_transferencia else "N/A",
     }
+    
     return context
 
 

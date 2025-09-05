@@ -28,11 +28,11 @@ logger = logging.getLogger(__name__)
 
 
 def _sanitize_html_for_pdf(html: str) -> str:
-    """Quita scripts externos (CDN) que pueden bloquear el render en backend.
+    """Quita scripts externos problemáticos pero mantiene Chart.js para gráficos.
     Mantiene el resto del contenido para impresión.
     """
-    # Eliminar <script src="..."></script>
-    html = re.sub(r"<script[^>]+src=\"[^\"]+\"[^>]*></script>", "", html, flags=re.IGNORECASE)
+    # Eliminar scripts externos problemáticos pero mantener Chart.js
+    html = re.sub(r"<script[^>]+src=\"https://cdnjs\.cloudflare\.com/ajax/libs/html2pdf\.js[^\"]*\"[^>]*></script>", "", html, flags=re.IGNORECASE)
     return html
 
 
@@ -52,6 +52,16 @@ def html_to_pdf_bytes(html: str) -> bytes:
         html_sanitized = _sanitize_html_for_pdf(html)
         # Cargar HTML y esperar a que termine la actividad de red
         page.set_content(html_sanitized, wait_until="networkidle", timeout=120000)
+        
+        # Esperar a que Chart.js se cargue y renderice el gráfico
+        try:
+            # Esperar a que el canvas del gráfico esté presente y tenga contenido
+            page.wait_for_selector("canvas", timeout=10000)
+            # Dar tiempo adicional para que Chart.js termine de renderizar
+            page.wait_for_timeout(3000)  # 3 segundos adicionales
+        except Exception as e:
+            logger.warning(f"Timeout esperando gráfico: {e}")
+        
         # Emular media 'print' para respetar estilos @media print
         page.emulate_media(media="print")
         # Configurar PDF con tamaño carta y manejo de saltos

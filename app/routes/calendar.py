@@ -396,7 +396,7 @@ async def get_calendar_task(
         )
     return task
 
-@router.post("/tasks/", response_model=CalendarTaskSchema, status_code=status.HTTP_201_CREATED)
+@router.post("/tasks", response_model=CalendarTaskSchema, status_code=status.HTTP_201_CREATED)
 async def create_calendar_task(
     task: CalendarTaskCreate,
     db: Session = Depends(get_db),

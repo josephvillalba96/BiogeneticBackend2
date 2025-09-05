@@ -73,22 +73,23 @@ class OpusUpdate(BaseModel):
     total_embriones: Optional[int] = Field(default=None, ge=0)
     porcentaje_total_embriones: Optional[str] = None
 
-class OpusInDB(OpusBase):
+class OpusSchema(OpusBase):
     id: int
     created_at: datetime
     updated_at: datetime
     toro_race: Optional[str] = None
+    toro_nombre: Optional[str] = None
 
     class Config:
         from_attributes = True
 
-class OpusDetail(OpusInDB):
+class OpusDetail(OpusSchema):
     cliente_nombre: str
     toro_nombre: str
     toro_race: Optional[str] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class OpusDateSummary(BaseModel):
     fecha: date

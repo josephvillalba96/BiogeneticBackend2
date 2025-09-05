@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.database.base import get_db
 from app.services import opus_service
 from app.services.auth_service import get_current_user_from_token
-from app.schemas.opus_schema import OpusCreate, OpusUpdate, OpusInDB, OpusDetail, OpusDateSummary, OpusDateDetail
+from app.schemas.opus_schema import OpusCreate, OpusUpdate, OpusSchema, OpusDetail, OpusDateSummary, OpusDateDetail
 from app.models.user import User
 from typing import List, Dict, Any
 import logging

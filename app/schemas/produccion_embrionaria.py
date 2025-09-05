@@ -67,7 +67,7 @@ class ProduccionEmbrionariaResumenPorFecha(BaseModel):
         from_attributes = True
 
 # Detalle de la producción embrionaria con lista de opus asociados (opcional si lo necesitas)
-from .opus_schema import OpusInDB
+from .opus_schema import OpusSchema
 
 class ProduccionEmbrionariaWithOpus(ProduccionEmbrionariaDetail):
-    opus: List[OpusInDB]
+    opus: List[OpusSchema]

@@ -331,7 +331,7 @@ def create_tasks_from_template(
     
     created_tasks = []
     for template_task in template_tasks:
-        # Calcular la fecha de la tarea
+        # Lógica de fecha corregida
         task_date = start_date + timedelta(days=template_task.day_offset)
         
         # Obtener el tipo de tarea
@@ -339,13 +339,22 @@ def create_tasks_from_template(
         if not task_type:
             continue
         
+        # Lógica de nombre corregida
+        if template_task.day_offset == 0:
+            # El día 0 es la tarea OPUS
+            summary = task_type.name
+        else:
+            # Los días siguientes se numeran como Día 0, Día 1, etc.
+            # day_offset de 1 se convierte en Día 0
+            summary = f"{task_type.name} - Día {template_task.day_offset - 1}"
+            
         # Crear la tarea
         task_data = CalendarTaskCreate(
             client_id=client_id,
             client_name=client.full_name,
             task_name=task_type.name,
             task_type=task_type.type_code,
-            summary=f"{task_type.name} - Día {template_task.day_offset}",
+            summary=summary,
             description=task_type.description,
             start_date=task_date,
             end_date=task_date,
