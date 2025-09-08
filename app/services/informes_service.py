@@ -9,6 +9,7 @@ from fastapi import HTTPException
 from app.models.opus import ProduccionEmbrionaria, Opus
 from app.models.bull import Bull
 from app.models.user import User
+from app.models.input_output import Output, Input
 from app.schemas.opus_schema import OpusSchema
 
 
@@ -59,6 +60,7 @@ def fetch_produccion_context(
                 registro.toro_nombre = toro_db.name
                 registro.race = toro_db.race.name if toro_db.race else "N/A"
 
+    # Inicializar resumen de toros con datos de Opus
     resumen_toros = {}
     for r in registros_schema:
         if r.toro_nombre not in resumen_toros:
@@ -79,6 +81,52 @@ def fetch_produccion_context(
         resumen_toros[r.toro_nombre]['total_donadoras'] += 1
         resumen_toros[r.toro_nombre]['cantidad_total_ctv'] += r.ctv
         resumen_toros[r.toro_nombre]['produccion_total'] += r.prevision
+
+    # Agregar datos de Outputs específicos de esta producción para calcular cantidad_semen_trabajada
+    # Usar la tabla intermedia produccion_embrionaria_output para obtener solo los outputs asociados
+    from app.models.relationships import produccion_embrionaria_output
+    
+    outputs_query = db.query(Output).join(
+        produccion_embrionaria_output,
+        Output.id == produccion_embrionaria_output.c.output_id
+    ).join(
+        Input, Output.input_id == Input.id
+    ).join(
+        Bull, Input.bull_id == Bull.id
+    ).filter(
+        produccion_embrionaria_output.c.produccion_embrionaria_id == produccion_id
+    )
+    
+    for output in outputs_query.all():
+        bull = output.input.bull
+        if not bull:
+            continue
+            
+        # Buscar el toro en el resumen por nombre
+        toro_encontrado = None
+        for toro_nombre, toro_data in resumen_toros.items():
+            if toro_data['toro_nombre'] == bull.name:
+                toro_encontrado = toro_data
+                break
+        
+        # Si no se encuentra, crear una nueva entrada
+        if not toro_encontrado:
+            resumen_toros[bull.name] = {
+                'toro_nombre': bull.name,
+                'race': bull.race.name if bull.race else "N/A",
+                'numero_registro': bull.registration_number,
+                'cantidad_semen_trabajada': 0.0,
+                'total_donadoras': 0,
+                'cantidad_total_ctv': 0.0,
+                'produccion_total': 0,
+                'porcentaje': 0.0,
+                'total_embriones': 0,
+                'total_oocitos': 0
+            }
+            toro_encontrado = resumen_toros[bull.name]
+        
+        # Sumar la cantidad de semen trabajada específicamente en esta producción
+        toro_encontrado['cantidad_semen_trabajada'] += float(output.quantity_output)
 
     # Calcular porcentajes para cada toro
     for toro_data in resumen_toros.values():

@@ -158,7 +158,19 @@ def create_output(db: Session, input_id: int, output_data: OutputCreate, user_id
     """
     Crea un nuevo output para un input existente y actualiza la cantidad disponible del input.
     Verifica que la cantidad de salida no exceda la cantidad disponible.
+    Si se proporciona produccion_embrionaria_id, crea la relación en la tabla intermedia.
     """
+    from app.models.opus import ProduccionEmbrionaria
+    from app.models.relationships import produccion_embrionaria_output
+    
+    # Debug: Log de los datos recibidos
+    logger.info(f"🔍 create_output llamado con input_id={input_id}, user_id={user_id}")
+    logger.info(f"🔍 output_data completo: {output_data}")
+    logger.info(f"🔍 output_data.dict(): {output_data.dict()}")
+    logger.info(f"🔍 produccion_embrionaria_id: {getattr(output_data, 'produccion_embrionaria_id', 'NO EXISTE')}")
+    logger.info(f"🔍 Tipo de output_data: {type(output_data)}")
+    logger.info(f"🔍 Atributos de output_data: {dir(output_data)}")
+    
     # Obtener el input
     input_obj = db.query(Input).filter(Input.id == input_id).first()
     if not input_obj:
@@ -173,6 +185,22 @@ def create_output(db: Session, input_id: int, output_data: OutputCreate, user_id
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permiso para crear outputs para este input"
         )
+    
+    # Si se proporciona produccion_embrionaria_id, verificar que la producción exista
+    if output_data.produccion_embrionaria_id:
+        logger.info(f"Validando producción embrionaria con ID: {output_data.produccion_embrionaria_id}")
+        produccion = db.query(ProduccionEmbrionaria).filter(
+            ProduccionEmbrionaria.id == output_data.produccion_embrionaria_id
+        ).first()
+        if not produccion:
+            logger.error(f"Producción embrionaria {output_data.produccion_embrionaria_id} no encontrada")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Producción embrionaria no encontrada"
+            )
+        logger.info(f"✅ Producción embrionaria {output_data.produccion_embrionaria_id} validada correctamente")
+    else:
+        logger.info("No se proporcionó produccion_embrionaria_id, saltando validación")
     
     # Calcular la cantidad total ya tomada a través de outputs existentes
     existing_outputs_total = db.query(func.sum(Output.quantity_output)).filter(Output.input_id == input_id).scalar() or 0
@@ -197,6 +225,46 @@ def create_output(db: Session, input_id: int, output_data: OutputCreate, user_id
     
     # Guardar el output en la base de datos
     db.add(db_output)
+    db.flush()  # Para obtener el ID del output antes de crear la relación
+    
+    # Si se proporciona produccion_embrionaria_id, crear la relación en la tabla intermedia
+    logger.info(f"🔍 Verificando produccion_embrionaria_id: {output_data.produccion_embrionaria_id}")
+    logger.info(f"🔍 Es None?: {output_data.produccion_embrionaria_id is None}")
+    logger.info(f"🔍 Es 0?: {output_data.produccion_embrionaria_id == 0}")
+    logger.info(f"🔍 Es falsy?: {not output_data.produccion_embrionaria_id}")
+    
+    if output_data.produccion_embrionaria_id:
+        logger.info(f"🔍 SÍ se proporcionó produccion_embrionaria_id: {output_data.produccion_embrionaria_id}")
+        logger.info(f"🔍 Intentando crear relación: output_id={db_output.id}, produccion_embrionaria_id={output_data.produccion_embrionaria_id}")
+        
+        try:
+            # Crear el statement de inserción
+            insert_values = {
+                'produccion_embrionaria_id': output_data.produccion_embrionaria_id,
+                'output_id': db_output.id
+            }
+            logger.info(f"🔍 Valores para insertar: {insert_values}")
+            
+            # Insertar en la tabla intermedia
+            insert_stmt = produccion_embrionaria_output.insert().values(**insert_values)
+            logger.info(f"🔍 Statement de inserción: {insert_stmt}")
+            
+            result = db.execute(insert_stmt)
+            logger.info(f"🔍 Resultado de la inserción: {result}")
+            
+            logger.info(f"✅ Relación creada exitosamente entre output {db_output.id} y producción embrionaria {output_data.produccion_embrionaria_id}")
+        except Exception as e:
+            logger.error(f"❌ Error al crear relación con producción embrionaria: {str(e)}")
+            logger.error(f"❌ Tipo de error: {type(e)}")
+            import traceback
+            logger.error(f"❌ Traceback: {traceback.format_exc()}")
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Error al asociar el output con la producción embrionaria"
+            )
+    else:
+        logger.info("❌ No se proporcionó produccion_embrionaria_id, no se creará relación")
     
     # Actualizar la cantidad tomada y el total restante en el input
     input_obj.quantity_taken = existing_outputs_total + output_data.quantity_output
@@ -210,10 +278,14 @@ def create_output(db: Session, input_id: int, output_data: OutputCreate, user_id
         input_obj.status_id = InputStatus.processing
     
     # Guardar cambios
+    logger.info(f"🔍 Ejecutando commit...")
     db.commit()
-    db.refresh(db_output)
+    logger.info(f"✅ Commit ejecutado exitosamente")
     
-    logger.info(f"Output creado para el input {input_id} por el usuario {user_id}")
+    db.refresh(db_output)
+    logger.info(f"🔍 Output refrescado, ID final: {db_output.id}")
+    
+    logger.info(f"✅ Output creado para el input {input_id} por el usuario {user_id}")
     return db_output
 
 def update_output(db: Session, output_id: int, output_data: OutputUpdate, user_id: int, current_user: Optional[User] = None) -> Optional[Output]:

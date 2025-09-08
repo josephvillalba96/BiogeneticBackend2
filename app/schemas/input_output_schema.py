@@ -174,6 +174,7 @@ class OutputCreate(BaseModel):
     quantity_output: Decimal = Field(..., gt=0)
     output_date: Optional[datetime] = None
     remark: Optional[str] = None
+    produccion_embrionaria_id: Optional[int] = None  # ID de la producción embrionaria a la que se asocia
 
 class OutputUpdate(BaseModel):
     quantity_output: Optional[Decimal] = Field(None, gt=0)

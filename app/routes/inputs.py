@@ -394,11 +394,22 @@ async def add_output(
     current_user: User = Depends(get_current_user_from_token)
 ):
     """
-    Añade un output a un input existente.
+    Añade un output a un input existente y opcionalmente lo asocia a una producción embrionaria.
+    
+    Parámetros:
+    - input_id: ID del input al que se añadirá el output
+    - output_data: Datos del output incluyendo:
+        - quantity_output: Cantidad de semen a extraer (requerido)
+        - output_date: Fecha de extracción (opcional, por defecto ahora)
+        - remark: Observaciones (opcional)
+        - produccion_embrionaria_id: ID de la producción embrionaria a la que asociar (opcional)
     
     Restricciones de acceso:
     - Los usuarios normales solo pueden añadir outputs a sus propios inputs
     - Los administradores pueden añadir outputs a cualquier input
+    
+    Si se proporciona produccion_embrionaria_id, se creará automáticamente la relación
+    en la tabla intermedia produccion_embrionaria_output.
     """
     new_output = input_service.add_output_to_input(
         db=db, 

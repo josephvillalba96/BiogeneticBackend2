@@ -130,3 +130,46 @@ def get_bulls_summary(
     # Solo admin o el dueño pueden consultar
     # (Opcional: agregar lógica de permisos si es necesario)
     return produccion_embrionaria_service.get_bulls_summary_by_produccion(db, production_id)
+
+
+@router.get("/cliente/{cliente_id}", response_model=List[ProduccionEmbrionariaDetail])
+def get_producciones_by_cliente_id(
+    cliente_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user_from_token),
+    skip: int = Query(default=0, ge=0, description="Número de registros a omitir (paginación)"),
+    limit: int = Query(default=100, ge=1, le=1000, description="Número máximo de registros a devolver (paginación)")
+):
+    """
+    Obtiene todas las producciones embrionarias de un cliente específico por su ID.
+    
+    - **cliente_id**: ID del cliente del cual se desean obtener las producciones
+    - **skip**: Número de registros a omitir para paginación (por defecto: 0)
+    - **limit**: Número máximo de registros a devolver (por defecto: 100, máximo: 1000)
+    
+    Requiere autenticación. Solo administradores pueden consultar producciones de cualquier cliente.
+    """
+    try:
+        # Verificar si es administrador
+        if not produccion_embrionaria_service.role_service.is_admin(current_user):
+            # Si no es admin, solo puede ver sus propias producciones
+            if current_user.id != cliente_id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN, 
+                    detail="No autorizado para ver producciones de otros clientes"
+                )
+        
+        return produccion_embrionaria_service.get_by_cliente_id(
+            db=db, 
+            cliente_id=cliente_id, 
+            skip=skip, 
+            limit=limit
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error al obtener producciones embrionarias del cliente {cliente_id}: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al obtener producciones embrionarias: {str(e)}"
+        )
