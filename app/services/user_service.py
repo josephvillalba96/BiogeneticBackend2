@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from app.models.user import User, Role
 from app.schemas.user_schema import UserCreate, UserUpdate
 from app.utils.security import get_password_hash, verify_password
@@ -13,16 +13,16 @@ import uuid
 logger = logging.getLogger(__name__)
 
 def get_user(db: Session, user_id: int) -> Optional[User]:
-    """Obtiene un usuario por su ID"""
-    return db.query(User).filter(User.id == user_id).first()
+    """Obtiene un usuario por su ID con sus roles cargados"""
+    return db.query(User).options(joinedload(User.roles)).filter(User.id == user_id).first()
 
 def get_user_by_email(db: Session, email: str) -> Optional[User]:
-    """Obtiene un usuario por su email"""
-    return db.query(User).filter(User.email == email).first()
+    """Obtiene un usuario por su email con sus roles cargados"""
+    return db.query(User).options(joinedload(User.roles)).filter(User.email == email).first()
 
 def get_user_by_document(db: Session, number_document: str) -> Optional[User]:
-    """Obtiene un usuario por su número de documento"""
-    return db.query(User).filter(User.number_document == number_document).first()
+    """Obtiene un usuario por su número de documento con sus roles cargados"""
+    return db.query(User).options(joinedload(User.roles)).filter(User.number_document == number_document).first()
 
 def get_users(db: Session, skip: int = 0, limit: int = 100) -> List[User]:
     """Obtiene una lista de usuarios"""
