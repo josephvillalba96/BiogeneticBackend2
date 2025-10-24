@@ -1,5 +1,6 @@
 from typing import List, Optional
 from pydantic import BaseModel, Field
+from decimal import Decimal
 
 class BullPerformanceItem(BaseModel):
     """Esquema para un item de rendimiento de toro"""
@@ -8,14 +9,14 @@ class BullPerformanceItem(BaseModel):
     registro: Optional[str] = Field(None, description="Número de registro del toro")
     lote: Optional[str] = Field(None, description="Número de lote del toro")
     donantes_fertilizadas: int = Field(..., description="Número de donantes fertilizadas")
-    ovocitos_civ: int = Field(..., description="Total de ovocitos CIV")
+    ovocitos_civ: Decimal = Field(..., description="Total de ovocitos CIV")
     porcentaje_produccion: float = Field(..., description="Porcentaje de producción")
 
 class BullPerformanceSummary(BaseModel):
     """Esquema para el resumen de rendimiento de toros"""
     total_toros: int = Field(..., description="Total de toros")
     total_donantes_fertilizadas: int = Field(..., description="Total de donantes fertilizadas")
-    total_ovocitos_civ: int = Field(..., description="Total de ovocitos CIV")
+    total_ovocitos_civ: Decimal = Field(..., description="Total de ovocitos CIV")
     promedio_porcentaje_produccion: float = Field(..., description="Promedio del porcentaje de producción")
     promedio_donantes_por_toro: float = Field(..., description="Promedio de donantes por toro")
     promedio_ovocitos_por_toro: float = Field(..., description="Promedio de ovocitos por toro")

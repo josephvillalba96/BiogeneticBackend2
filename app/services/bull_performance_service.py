@@ -38,7 +38,7 @@ def get_bull_performance(
         COUNT(o.id) AS donantes_fertilizadas,
         SUM(o.total_oocitos) AS ovocitos_civ,
         ROUND(
-            (COUNT(o.id) * 100.0 / NULLIF(SUM(o.total_oocitos),0)), 
+            (SUM(o.prevision) * 100.0 / NULLIF(SUM(o.ctv),0)), 
             2
         ) AS porcentaje_produccion
     FROM opus o
@@ -124,7 +124,7 @@ def get_bull_performance_summary(
         COUNT(o.id) AS total_donantes_fertilizadas,
         SUM(o.total_oocitos) AS total_ovocitos_civ,
         ROUND(
-            (COUNT(o.id) * 100.0 / NULLIF(SUM(o.total_oocitos),0)), 
+            (SUM(o.prevision) * 100.0 / NULLIF(SUM(o.ctv),0)), 
             2
         ) AS promedio_porcentaje_produccion
     FROM opus o
