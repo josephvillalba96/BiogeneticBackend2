@@ -125,6 +125,8 @@ async def root():
         <div class="container">
             <a href="/docs" class="button">Documentación API (Swagger)</a>
             <a href="/auth-help" class="button">Ayuda de Autenticación</a>
+            <a href="/api/facturacion/form" class="button">💰 Crear Factura</a>
+            <a href="/api/pagos/pse/create/1" class="button">💳 Probar Pago PSE</a>
         </div>
     </body>
     </html>

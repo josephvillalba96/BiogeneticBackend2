@@ -41,6 +41,8 @@ class User(Base, BaseModel):
     calendar_tasks_as_client = relationship("CalendarTask", foreign_keys="CalendarTask.client_id", back_populates="client")
     # Tareas del calendario creadas por este usuario
     calendar_tasks_created = relationship("CalendarTask", foreign_keys="CalendarTask.created_by", back_populates="creator")
+    # Facturas del cliente
+    facturas = relationship("Facturacion", back_populates="cliente", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<User {self.email}>" 

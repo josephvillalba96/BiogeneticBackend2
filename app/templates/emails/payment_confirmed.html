@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pago Confirmado - BioGenetic</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #27ae60;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .status-icon {
+            font-size: 48px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .status-message {
+            text-align: center;
+            font-size: 20px;
+            color: #27ae60;
+            margin-bottom: 30px;
+        }
+        .info-box {
+            background: #d5f4e6;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #27ae60;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid #a9d4c7;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .info-value {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .amount {
+            font-size: 24px;
+            font-weight: bold;
+            color: #27ae60;
+        }
+        .success-box {
+            background: #e8f5e8;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #bdc3c7;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #27ae60;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 5px;
+        }
+        .btn:hover {
+            background-color: #229954;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🧬 BioGenetic</div>
+            <p>Servicios de Biogenética</p>
+        </div>
+        
+        <div class="status-icon">✅</div>
+        <div class="status-message">¡Pago Confirmado!</div>
+        
+        <p>Hola <strong>{{ user_name }}</strong>,</p>
+        
+        <p>¡Excelente! Su pago ha sido procesado exitosamente. Su factura ha sido marcada como pagada.</p>
+        
+        <div class="success-box">
+            <h3>🎉 ¡Pago Exitoso!</h3>
+            <p>Su transacción se ha completado correctamente.</p>
+        </div>
+        
+        <div class="info-box">
+            <h3>Detalles del Pago</h3>
+            <div class="info-row">
+                <span class="info-label">ID Factura:</span>
+                <span class="info-value">{{ id_factura }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Monto Pagado:</span>
+                <span class="info-value amount">${{ "%.2f"|format(monto) }} COP</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Fecha de Pago:</span>
+                <span class="info-value">{{ fecha_pago }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Estado:</span>
+                <span class="info-value">✅ Pagado</span>
+            </div>
+        </div>
+        
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0;">
+            <h3>📋 Próximos Pasos</h3>
+            <ul>
+                <li>Su factura está ahora marcada como <strong>pagada</strong></li>
+                <li>Puede descargar el comprobante de pago desde su panel</li>
+                <li>Recibirá los servicios contratados según lo acordado</li>
+                <li>Conserve este email como comprobante de pago</li>
+            </ul>
+        </div>
+        
+        <p>¡Gracias por confiar en BioGenetic para sus necesidades de biogenética!</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="#" class="btn">Ver Factura</a>
+            <a href="#" class="btn">Descargar Comprobante</a>
+        </div>
+        
+        <div class="footer">
+            <p>Este es un email automático, por favor no responda a este mensaje.</p>
+            <p>© 2024 BioGenetic. Todos los derechos reservados.</p>
+        </div>
+    </div>
+</body>
+</html>

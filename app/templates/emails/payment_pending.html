@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pago Pendiente - BioGenetic</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .status-icon {
+            font-size: 48px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .status-message {
+            text-align: center;
+            font-size: 20px;
+            color: #f39c12;
+            margin-bottom: 30px;
+        }
+        .info-box {
+            background: #ecf0f1;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid #bdc3c7;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .info-value {
+            color: #7f8c8d;
+        }
+        .amount {
+            font-size: 24px;
+            font-weight: bold;
+            color: #27ae60;
+        }
+        .instructions {
+            background: #e8f4fd;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #3498db;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #bdc3c7;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 5px;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🧬 BioGenetic</div>
+            <p>Servicios de Biogenética</p>
+        </div>
+        
+        <div class="status-icon">⏳</div>
+        <div class="status-message">Pago Pendiente</div>
+        
+        <p>Hola <strong>{{ user_name }}</strong>,</p>
+        
+        <p>Su pago PSE ha sido iniciado y está pendiente de confirmación por parte del banco.</p>
+        
+        <div class="info-box">
+            <h3>Detalles del Pago</h3>
+            <div class="info-row">
+                <span class="info-label">Factura:</span>
+                <span class="info-value">#{{ factura_id }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Monto:</span>
+                <span class="info-value amount">${{ "%.2f"|format(monto) }} COP</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Referencia:</span>
+                <span class="info-value">{{ ref_payco }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Banco:</span>
+                <span class="info-value">{{ bank_name }}</span>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3>📋 Próximos Pasos</h3>
+            <ol>
+                <li>Complete el proceso de pago en el sitio web de su banco</li>
+                <li>Una vez confirmado, recibirá un email de confirmación</li>
+                <li>Su factura será marcada como pagada automáticamente</li>
+            </ol>
+        </div>
+        
+        <p>Si tiene alguna pregunta o necesita asistencia, no dude en contactarnos.</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="#" class="btn">Ver Estado del Pago</a>
+            <a href="#" class="btn">Contactar Soporte</a>
+        </div>
+        
+        <div class="footer">
+            <p>Este es un email automático, por favor no responda a este mensaje.</p>
+            <p>© 2024 BioGenetic. Todos los derechos reservados.</p>
+        </div>
+    </div>
+</body>
+</html>

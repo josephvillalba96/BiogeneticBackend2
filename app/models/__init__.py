@@ -5,6 +5,7 @@ from app.models.base_model import Base, BaseModel
 from app.models.user import User, Role, DocumentType
 from app.models.bull import Bull, Race, Sex
 from app.models.opus import Opus, ProduccionEmbrionaria, Transferencia, ReportTransfer
+from app.models.facturacion import Facturacion, FacturaDetalle, EstadoFactura, Pagos, EstadoPago
 from app.models.relationships import setup_relationships
 from app.models.calendar import CalendarTask, CalendarTaskType, CalendarTemplate, CalendarTemplateTask
 
@@ -22,6 +23,11 @@ __all__ = [
     'Race',
     'Sex',
     'Opus',
+    'Facturacion',
+    'FacturaDetalle',
+    'EstadoFactura',
+    'Pagos',
+    'EstadoPago',
     'CalendarTask',
     'CalendarTaskType',
     'CalendarTemplate',
@@ -37,6 +43,9 @@ def verify_all_models():
         "Race": Race.__table__,
         "Sex": Sex.__table__,
         "Opus": Opus.__table__,
+        "Facturacion": Facturacion.__table__,
+        "FacturaDetalle": FacturaDetalle.__table__,
+        "Pagos": Pagos.__table__,
         "CalendarTask": CalendarTask.__table__,
         "CalendarTaskType": CalendarTaskType.__table__,
         "CalendarTemplate": CalendarTemplate.__table__,

@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Conexión directa a MySQL para evitar problemas de importación
-DB_USER = 'root'
+DB_USER = 'joseph'
 DB_PASSWORD = 'emi0731'
 DB_HOST = 'localhost'
 DB_PORT = 3306
