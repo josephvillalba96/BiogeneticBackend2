@@ -132,6 +132,45 @@ def get_bulls_summary(
     return produccion_embrionaria_service.get_bulls_summary_by_produccion(db, production_id)
 
 
+@router.delete("/{production_id}", status_code=status.HTTP_200_OK)
+async def delete_produccion_embrionaria_with_rollback(
+    production_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user_from_token)
+):
+    """
+    Elimina una producción embrionaria restaurando todas las cantidades de inputs afectados.
+    
+    Este endpoint:
+    1. Obtiene todos los outputs relacionados a la producción embrionaria
+    2. Restaura las cantidades tomadas de las distintas entradas que fueron afectadas
+    3. Elimina todos los registros opus relacionados a la producción
+    4. Elimina la producción embrionaria
+    
+    Solo disponible para administradores.
+    """
+    try:
+        # Verificar que el usuario sea administrador
+        if not produccion_embrionaria_service.role_service.is_admin(current_user):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Solo los administradores pueden eliminar producciones embrionarias"
+            )
+        
+        resultado = produccion_embrionaria_service.delete_with_rollback(db, production_id)
+        return resultado
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error al eliminar producción embrionaria {production_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al eliminar la producción embrionaria: {str(e)}"
+        )
+
+
 @router.get("/cliente/{cliente_id}", response_model=List[ProduccionEmbrionariaDetail])
 def get_producciones_by_cliente_id(
     cliente_id: int,

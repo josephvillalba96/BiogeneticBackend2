@@ -4,15 +4,17 @@ from datetime import timedelta
 from app.services import role_service
 from datetime import datetime
 
-from app.models.opus import ProduccionEmbrionaria
+from app.models.opus import ProduccionEmbrionaria, Opus
 from app.schemas.produccion_embrionaria import (
     ProduccionEmbrionariaCreate,
     ProduccionEmbrionariaUpdate,
 )
 
 from app.models.user import User
-from sqlalchemy import or_
-from app.models.input_output import Output
+from sqlalchemy import or_, func
+from app.models.input_output import Output, Input, InputStatus
+from app.models.relationships import produccion_embrionaria_output
+import logging
 
 
 def _process_produccion_with_opus(produccion, total_opus):
@@ -246,6 +248,146 @@ def delete(db: Session, produccion_id: int):
     db.delete(produccion)
     db.commit()
     return {"ok": True}
+
+
+def delete_with_rollback(db: Session, produccion_id: int):
+    """
+    Elimina una producción embrionaria restaurando todas las cantidades de inputs afectados.
+    
+    Este proceso realiza las siguientes acciones en orden:
+    1. Obtiene todos los outputs relacionados a la producción embrionaria
+    2. Restaura las cantidades tomadas de las distintas entradas que fueron afectadas
+    3. Elimina todos los registros opus relacionados a la producción
+    4. Elimina la producción embrionaria
+    
+    Args:
+        db: Sesión de base de datos
+        produccion_id: ID de la producción embrionaria a eliminar
+    
+    Returns:
+        dict con status ok y mensaje de confirmación
+    
+    Raises:
+        HTTPException: Si la producción no se encuentra o hay un error en el proceso
+    """
+    logger = logging.getLogger(__name__)
+    
+    try:
+        # 1. Obtener la producción embrionaria
+        produccion = db.query(ProduccionEmbrionaria).filter(
+            ProduccionEmbrionaria.id == produccion_id
+        ).first()
+        
+        if not produccion:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Producción embrionaria no encontrada"
+            )
+        
+        logger.info(f"Iniciando eliminación de producción embrionaria {produccion_id}")
+        
+        # 2. Obtener todos los outputs relacionados a esta producción
+        outputs_query = db.query(Output).join(
+            produccion_embrionaria_output,
+            Output.id == produccion_embrionaria_output.c.output_id
+        ).filter(
+            produccion_embrionaria_output.c.produccion_embrionaria_id == produccion_id
+        )
+        
+        outputs = outputs_query.all()
+        logger.info(f"Outputs encontrados relacionados: {len(outputs)}")
+        
+        # 3. Restaurar las cantidades de los inputs
+        inputs_to_update = {}
+        
+        for output in outputs:
+            input_obj = output.input
+            
+            # Agrupar por input_id para evitar actualizaciones duplicadas
+            if input_obj.id not in inputs_to_update:
+                inputs_to_update[input_obj.id] = {
+                    'input': input_obj,
+                    'quantity_to_restore': 0
+                }
+            
+            # Restar la cantidad del output de la cantidad tomada
+            inputs_to_update[input_obj.id]['quantity_to_restore'] += float(output.quantity_output)
+        
+        # Actualizar cada input
+        for input_id, data in inputs_to_update.items():
+            input_obj = data['input']
+            quantity_to_restore = data['quantity_to_restore']
+            
+            # Restar la cantidad tomada
+            current_taken = float(input_obj.quantity_taken)
+            new_taken = max(0, current_taken - quantity_to_restore)  # No puede ser negativo
+            
+            input_obj.quantity_taken = new_taken
+            input_obj.total = float(input_obj.quantity_received) - new_taken
+            
+            # Actualizar el estado del input
+            if new_taken >= float(input_obj.quantity_received):
+                input_obj.status_id = InputStatus.completed
+            elif new_taken > 0:
+                input_obj.status_id = InputStatus.processing
+            else:
+                input_obj.status_id = InputStatus.pending
+            
+            logger.info(
+                f"Input {input_id} actualizado: "
+                f"quantity_taken={current_taken} -> {new_taken}, "
+                f"total={input_obj.total}, status={input_obj.status_id.value}"
+            )
+        
+        # 4. Eliminar las relaciones en la tabla intermedia produccion_embrionaria_output
+        relaciones_eliminadas = db.execute(
+            produccion_embrionaria_output.delete().where(
+                produccion_embrionaria_output.c.produccion_embrionaria_id == produccion_id
+            )
+        ).rowcount
+        
+        logger.info(f"Relaciones eliminadas de produccion_embrionaria_output: {relaciones_eliminadas}")
+        
+        # 5. Eliminar los outputs de la base de datos
+        output_ids = [output.id for output in outputs]
+        outputs_deleted = db.query(Output).filter(Output.id.in_(output_ids)).delete(synchronize_session=False)
+        
+        logger.info(f"Outputs eliminados: {outputs_deleted}")
+        
+        # 6. Eliminar los registros opus relacionados
+        opus_deleted = db.query(Opus).filter(
+            Opus.produccion_embrionaria_id == produccion_id
+        ).delete()
+        
+        logger.info(f"Registros OPUS eliminados: {opus_deleted}")
+        
+        # 7. Eliminar la producción embrionaria
+        db.delete(produccion)
+        
+        # Commit todos los cambios
+        db.commit()
+        
+        logger.info(f"Producción embrionaria {produccion_id} eliminada exitosamente")
+        
+        return {
+            "ok": True,
+            "message": f"Producción embrionaria eliminada exitosamente. "
+                       f"Outputs eliminados: {outputs_deleted}, "
+                       f"Inputs actualizados: {len(inputs_to_update)}, "
+                       f"Registros OPUS eliminados: {opus_deleted}, "
+                       f"Relaciones eliminadas: {relaciones_eliminadas}"
+        }
+        
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error al eliminar producción embrionaria {produccion_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al eliminar la producción embrionaria: {str(e)}"
+        )
 
 
 def get_bulls_summary_by_produccion(db: Session, produccion_id: int):

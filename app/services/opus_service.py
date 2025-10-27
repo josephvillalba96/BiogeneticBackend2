@@ -281,17 +281,24 @@ def delete_opus(
     opus_id: int,
     current_user: User
 ) -> bool:
-    """Elimina un registro de Opus"""
-    # Obtener el registro
-    db_opus = get_opus(db, opus_id, current_user)
-    if not db_opus:
-        return False
-    
-    # Verificar permisos
+    """
+    Elimina un registro de Opus.
+    Solo administradores y veterinarios pueden eliminar registros.
+    """
+    # Verificar permisos primero
     if not (role_service.is_admin(current_user) or role_service.is_veterinarian(current_user)):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo los administradores y veterinarios pueden eliminar registros"
+        )
+    
+    # Obtener el registro directamente desde la base de datos
+    db_opus = db.query(Opus).filter(Opus.id == opus_id).first()
+    
+    if not db_opus:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Registro no encontrado"
         )
     
     try:

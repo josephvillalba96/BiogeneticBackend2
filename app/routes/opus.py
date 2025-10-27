@@ -118,7 +118,7 @@ async def update_opus(
             detail=f"Error al actualizar registro: {str(e)}"
         )
 
-@router.delete("/{opus_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{opus_id}", status_code=status.HTTP_200_OK)
 async def delete_opus(
     opus_id: int,
     request: Request,
