@@ -33,7 +33,7 @@ from app.services.factura_pdf_service import render_factura_html, html_to_pdf_by
 
 router = APIRouter(prefix="/facturacion", tags=["facturación"])
 
-@router.post("/", response_model=FacturacionResponse)
+@router.post("", response_model=FacturacionResponse)
 async def create_factura(
     factura_data: FacturacionCreate,
     db: Session = Depends(get_db),
@@ -454,7 +454,7 @@ async def factura_form(request: Request):
     </html>
     """
 
-@router.get("/", response_model=List[FacturacionListResponse])
+@router.get("", response_model=List[FacturacionListResponse])
 async def list_facturas_endpoint(
     skip: int = Query(0, ge=0, description="Número de registros a omitir"),
     limit: int = Query(100, ge=1, le=1000, description="Número máximo de registros"),
