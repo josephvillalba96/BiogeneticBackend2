@@ -80,6 +80,45 @@ async def create_factura(
         error_detail = f"Error interno: {str(e)}\nTraceback: {traceback.format_exc()}"
         raise HTTPException(status_code=500, detail=error_detail)
 
+
+@router.get("", response_model=List[FacturacionListResponse])
+async def list_facturas_endpoint(
+    skip: int = Query(0, ge=0, description="Número de registros a omitir"),
+    limit: int = Query(100, ge=1, le=1000, description="Número máximo de registros"),
+    estado: Optional[str] = Query(None, description="Filtrar por estado"),
+    fecha_desde: Optional[datetime] = Query(None, description="Fecha desde"),
+    fecha_hasta: Optional[datetime] = Query(None, description="Fecha hasta"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user_from_token)
+):
+    """
+    Listar facturas con paginación y filtros
+    
+    - **skip**: Número de registros a omitir
+    - **limit**: Número máximo de registros (máximo 1000)
+    - **estado**: Filtrar por estado (pendiente, vencido, pagado)
+    - **fecha_desde**: Filtrar desde fecha
+    - **fecha_hasta**: Filtrar hasta fecha
+    
+    Los clientes solo ven sus propias facturas.
+    Los administradores y veterinarios ven todas las facturas.
+    """
+    try:
+        facturas, total = list_facturas(
+            db=db,
+            user=current_user,
+            skip=skip,
+            limit=limit,
+            estado=estado,
+            fecha_desde=fecha_desde,
+            fecha_hasta=fecha_hasta
+        )
+        
+        return facturas
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al listar facturas: {str(e)}")
+
+
 @router.post("/from-form", response_model=FacturacionResponse)
 async def create_factura_from_form_endpoint(
     form_data: FacturaFormData,
@@ -96,6 +135,9 @@ async def create_factura_from_form_endpoint(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
+
+
+
 
 @router.get("/form", response_class=HTMLResponse)
 async def factura_form(request: Request):
@@ -454,42 +496,6 @@ async def factura_form(request: Request):
     </html>
     """
 
-@router.get("", response_model=List[FacturacionListResponse])
-async def list_facturas_endpoint(
-    skip: int = Query(0, ge=0, description="Número de registros a omitir"),
-    limit: int = Query(100, ge=1, le=1000, description="Número máximo de registros"),
-    estado: Optional[str] = Query(None, description="Filtrar por estado"),
-    fecha_desde: Optional[datetime] = Query(None, description="Fecha desde"),
-    fecha_hasta: Optional[datetime] = Query(None, description="Fecha hasta"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_from_token)
-):
-    """
-    Listar facturas con paginación y filtros
-    
-    - **skip**: Número de registros a omitir
-    - **limit**: Número máximo de registros (máximo 1000)
-    - **estado**: Filtrar por estado (pendiente, vencido, pagado)
-    - **fecha_desde**: Filtrar desde fecha
-    - **fecha_hasta**: Filtrar hasta fecha
-    
-    Los clientes solo ven sus propias facturas.
-    Los administradores y veterinarios ven todas las facturas.
-    """
-    try:
-        facturas, total = list_facturas(
-            db=db,
-            user=current_user,
-            skip=skip,
-            limit=limit,
-            estado=estado,
-            fecha_desde=fecha_desde,
-            fecha_hasta=fecha_hasta
-        )
-        
-        return facturas
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al listar facturas: {str(e)}")
 
 @router.get("/{factura_id}", response_model=FacturacionResponse)
 async def get_factura(
