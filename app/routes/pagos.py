@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from decimal import Decimal
+import logging
 
 from app.database.base import get_db
 from app.models.user import User
@@ -11,22 +12,28 @@ from app.routes.auth import get_current_user_from_token
 from app.schemas.pagos_schema import (
     PagoCreate,
     PagoPSECreate,
+    PagoDaviplataCreate,
+    DaviPlataConfirmOTP,
     PagoResponse,
     PagoListResponse,
     PagoUpdate,
     PagoStatusResponse,
     PSEPaymentResponse,
+    DaviPlataOTPConfirmResponse,
     PaymentConfirmationResponse,
     BanksResponse
 )
 from app.services.epayco_service import (
     EpaycoConfigService,
     PSEPaymentService,
+    DaviPlataPaymentService,
     PaymentConfirmationService,
     PaymentNotificationService
 )
 
 router = APIRouter(prefix="/pagos", tags=["pagos"])
+
+logger = logging.getLogger(__name__)
 
 @router.post("/pse/create", response_model=PSEPaymentResponse)
 async def create_pse_payment(
@@ -61,6 +68,77 @@ async def create_pse_payment(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
+
+@router.post("/daviplata/create", response_model=PSEPaymentResponse)
+async def create_daviplata_payment(
+    daviplata_data: PagoDaviplataCreate,
+    request: Request,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user_from_token)
+):
+    """
+    Crear pago DaviPlata para una factura
+    
+    - **factura_id**: ID de la factura a pagar
+    - **full_name**: Nombre completo del pagador
+    - **email**: Email del pagador
+    - **phone**: Teléfono del pagador (requerido para DaviPlata)
+    - **address**: Dirección del pagador
+    - **doc_type**: Tipo de documento (CC, CE, etc.)
+    - **document**: Número de documento del pagador
+    - **city**: Ciudad del pagador
+    
+    Retorna la información necesaria. El usuario debe revisar su aplicación DaviPlata para completar el pago.
+    """
+    try:
+        daviplata_service = DaviPlataPaymentService(db)
+        request_ip = request.client.host
+        
+        result = await daviplata_service.create_daviplata_payment(
+            factura_id=daviplata_data.factura_id,
+            user=current_user,
+            request_ip=request_ip,
+            daviplata_data=daviplata_data
+        )
+        
+        return PSEPaymentResponse(**result)
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error al crear pago DaviPlata: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
+
+@router.post("/daviplata/confirm-otp", response_model=DaviPlataOTPConfirmResponse)
+async def confirm_daviplata_otp(
+    otp_data: DaviPlataConfirmOTP,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user_from_token)
+):
+    """
+    Confirmar OTP de pago DaviPlata
+    
+    - **ref_payco**: Referencia del pago en ePayco
+    - **otp**: Código OTP recibido en la aplicación DaviPlata
+    
+    Retorna el resultado de la confirmación del pago.
+    """
+    try:
+        daviplata_service = DaviPlataPaymentService(db)
+        
+        result = await daviplata_service.confirm_daviplata_otp(
+            ref_payco=otp_data.ref_payco,
+            otp=otp_data.otp
+        )
+        
+        return DaviPlataOTPConfirmResponse(**result)
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error al confirmar OTP DaviPlata: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
 
 @router.get("/pse/create/{factura_id}", response_class=HTMLResponse)
@@ -331,8 +409,13 @@ async def payment_response(
                     <p><strong>Respuesta:</strong> {x_response}</p>
                 </div>
                 
-                <a href="/api/facturacion/" class="btn">Ver Facturas</a>
-                <a href="/" class="btn">Inicio</a>
+                <a href="{settings.BASE_URL}/facturas" class="btn">Ver Facturas</a>
+                <script>
+                    // Redirigir al frontend después de 3 segundos
+                    setTimeout(function() {{
+                        window.location.href = "{settings.BASE_URL}/pagos/resultado?ref_payco={ref_payco}&estado={result['estado']}";
+                    }}, 3000);
+                </script>
             </div>
         </body>
         </html>
@@ -358,31 +441,206 @@ async def payment_confirmation(
 ):
     """
     Webhook de confirmación de ePayco
+    
+    ePayco envía un POST a esta URL cuando el estado de un pago cambia.
+    Los datos vienen en el BODY como form data (application/x-www-form-urlencoded), NO en la URL.
+    
+    Campos que envía ePayco en el body:
+    - x_ref_payco o ref_payco: Referencia única del pago (obligatorio)
+    - x_transaction_id: ID de transacción de ePayco
+    - x_amount: Monto de la transacción
+    - x_currency_code: Código de moneda (COP, USD, etc.)
+    - x_signature: Firma SHA256 para validar autenticidad
+    - x_response: Estado de la transacción (Aceptada, Rechazada, Pendiente, etc.)
+    - x_response_reason_text: Mensaje descriptivo del estado
+    - x_cod_response: Código numérico de respuesta (1=aceptada, 2=rechazada, 3=pendiente, 4=fallida)
+    - x_id_invoice: ID de la factura
+    - x_approval_code: Código de aprobación
+    - x_franchise: Método de pago (PSE, DaviPlata, etc.)
+    - x_bank_name: Nombre del banco (si aplica)
+    - x_transaction_date: Fecha de la transacción
+    
+    La URL de confirmación debe configurarse en ePayco y debe ser accesible públicamente.
     """
     try:
-        # Obtener datos del request
+        # Obtener datos del request body (form data)
+        # ePayco envía los datos como application/x-www-form-urlencoded
         form_data = await request.form()
-        ref_payco = form_data.get('ref_payco')
         
-        if not ref_payco:
-            raise HTTPException(status_code=400, detail="ref_payco es requerido")
+        # Log completo de lo que recibe el webhook para debugging
+        logger.info(f"Webhook recibido desde IP: {request.client.host}")
+        logger.debug(f"Datos recibidos del webhook: {dict(form_data)}")
         
-        confirmation_service = PaymentConfirmationService(db)
-        result = await confirmation_service.confirm_payment(ref_payco)
+        # === VALIDACIÓN DE FIRMA (SECURITY) ===
+        # Extraer campos necesarios para validar la firma
+        x_ref_payco = form_data.get('x_ref_payco') or form_data.get('ref_payco')
+        x_transaction_id = form_data.get('x_transaction_id', '')
+        x_amount = form_data.get('x_amount', '')
+        x_currency_code = form_data.get('x_currency_code', '')
+        x_signature = form_data.get('x_signature', '')
         
-        # Enviar notificación en background
+        if not x_ref_payco:
+            logger.error("Webhook recibido sin x_ref_payco/ref_payco")
+            raise HTTPException(status_code=400, detail="x_ref_payco es requerido")
+        
+        # Validar firma de ePayco (como en el script PHP)
+        # signature = hash('sha256', p_cust_id_cliente + '^' + p_key + '^' + x_ref_payco + '^' + x_transaction_id + '^' + x_amount + '^' + x_currency_code)
+        from app.config import settings
+        import hashlib
+        
+        p_cust_id_cliente = settings.EPAYCO_PUBLIC_KEY
+        p_key = settings.EPAYCO_PRIVATE_KEY
+        
+        # Construir string para firmar
+        signature_string = f"{p_cust_id_cliente}^{p_key}^{x_ref_payco}^{x_transaction_id}^{x_amount}^{x_currency_code}"
+        calculated_signature = hashlib.sha256(signature_string.encode()).hexdigest()
+        
+        logger.info(f"Validando firma: x_signature={x_signature}, calculated={calculated_signature}")
+        
+        if x_signature and calculated_signature != x_signature:
+            logger.error(f"⚠️ Firma inválida! Webhook rechazado. x_ref_payco={x_ref_payco}")
+            logger.error(f"Firma recibida: {x_signature}")
+            logger.error(f"Firma calculada: {calculated_signature}")
+            raise HTTPException(status_code=403, detail="Firma inválida")
+        
+        logger.info(f"✅ Firma validada correctamente para x_ref_payco={x_ref_payco}")
+        
+        # Usar ref_payco en adelante (normalizar nombre)
+        ref_payco = x_ref_payco
+        
+        # Extraer otros campos importantes del webhook
+        x_response = form_data.get('x_response', '')
+        x_response_reason_text = form_data.get('x_response_reason_text', '')
+        x_cod_response = form_data.get('x_cod_response', '')
+        x_id_invoice = form_data.get('x_id_invoice', '')
+        x_approval_code = form_data.get('x_approval_code', '')
+        x_franchise = form_data.get('x_franchise', '')
+        x_bank_name = form_data.get('x_bank_name', '')
+        
+        logger.info(f"Procesando confirmación: ref_payco={ref_payco}, x_cod_response={x_cod_response}, x_response={x_response}")
+        
+        # Buscar el pago en la base de datos usando ref_payco
         pago = db.query(Pagos).filter(Pagos.ref_payco == ref_payco).first()
+        
+        # Si no se encuentra por ref_payco, intentar buscar por invoice (x_id_invoice)
+        if not pago:
+            x_id_invoice = form_data.get('x_id_invoice') or form_data.get('idfactura')
+            if x_id_invoice:
+                logger.info(f"Buscando pago por invoice: {x_id_invoice}")
+                # Buscar factura por id_factura
+                factura = db.query(Facturacion).filter(Facturacion.id_factura == x_id_invoice).first()
+                if factura:
+                    # Buscar pago pendiente para esa factura
+                    pago = db.query(Pagos).filter(
+                        Pagos.factura_id == factura.id,
+                        Pagos.estado.in_([EstadoPago.pendiente, EstadoPago.procesando])
+                    ).order_by(Pagos.fecha_pago.desc()).first()
+                    
+                    if pago:
+                        # Actualizar el pago con el ref_payco del webhook
+                        pago.ref_payco = ref_payco
+                        db.commit()
+                        logger.info(f"✅ Pago encontrado por invoice y actualizado con ref_payco: {ref_payco}")
+        
+        if not pago:
+            logger.warning(f"Webhook recibido para pago no encontrado: ref_payco={ref_payco}")
+            # Retornar 200 para que ePayco no reintente (el pago puede no existir en nuestro sistema)
+            return {"status": "warning", "message": f"Pago con ref_payco {ref_payco} no encontrado"}
+        
+        # === VALIDAR MONTO Y FACTURA ===
+        # Validar que el invoice y monto coincidan con lo esperado (seguridad)
+        factura = db.query(Facturacion).filter(Facturacion.id == pago.factura_id).first()
+        if factura:
+            # Validar invoice
+            if x_id_invoice and factura.id_factura != x_id_invoice:
+                logger.error(f"⚠️ Invoice no coincide! Esperado: {factura.id_factura}, Recibido: {x_id_invoice}")
+                raise HTTPException(status_code=400, detail="Número de factura no coincide")
+            
+            # Validar monto (convertir a float para comparar)
+            if x_amount:
+                try:
+                    amount_received = float(x_amount)
+                    amount_expected = float(factura.monto_pagar)
+                    # Comparar con tolerancia de 1 peso por redondeo
+                    if abs(amount_received - amount_expected) > 1:
+                        logger.error(f"⚠️ Monto no coincide! Esperado: {amount_expected}, Recibido: {amount_received}")
+                        raise HTTPException(status_code=400, detail="Monto pagado no coincide")
+                except ValueError:
+                    logger.warning(f"No se pudo validar monto: x_amount={x_amount}")
+        
+        # Extraer bank_url del webhook si viene (puede venir en diferentes campos)
+        bank_url_webhook = form_data.get('urlbanco') or form_data.get('x_urlbanco') or form_data.get('bank_url') or form_data.get('x_bank_url')
+        bank_name_webhook = form_data.get('x_bank_name') or form_data.get('bank_name')
+        
+        # Si el pago no tiene bank_url y viene en el webhook, actualizarlo
+        if not pago.bank_url and bank_url_webhook:
+            pago.bank_url = bank_url_webhook
+            logger.info(f"✅ bank_url actualizado desde webhook: {bank_url_webhook}")
+        if not pago.bank_name and bank_name_webhook:
+            pago.bank_name = bank_name_webhook
+        
+        # === PROCESAR ESTADO SEGÚN x_cod_response ===
+        # x_cod_response: 1=aceptada, 2=rechazada, 3=pendiente, 4=fallida
+        if x_cod_response:
+            try:
+                cod_response = int(x_cod_response)
+                
+                if cod_response == 1:  # Transacción aceptada
+                    pago.estado = EstadoPago.completado
+                    pago.response_code = "Aceptada"
+                    # Actualizar factura a pagado
+                    if factura:
+                        from app.models.facturacion import EstadoFactura
+                        from datetime import datetime
+                        factura.estado = EstadoFactura.pagado
+                        factura.fecha_pago = datetime.now()
+                    logger.info(f"✅ Pago ACEPTADO: ref_payco={ref_payco}")
+                    
+                elif cod_response == 2:  # Transacción rechazada
+                    pago.estado = EstadoPago.fallido
+                    pago.response_code = "Rechazada"
+                    logger.warning(f"❌ Pago RECHAZADO: ref_payco={ref_payco}, razón={x_response_reason_text}")
+                    
+                elif cod_response == 3:  # Transacción pendiente
+                    pago.estado = EstadoPago.procesando
+                    pago.response_code = "Pendiente"
+                    logger.info(f"⏳ Pago PENDIENTE: ref_payco={ref_payco}")
+                    
+                elif cod_response == 4:  # Transacción fallida
+                    pago.estado = EstadoPago.fallido
+                    pago.response_code = "Fallida"
+                    logger.error(f"❌ Pago FALLIDO: ref_payco={ref_payco}, razón={x_response_reason_text}")
+                
+                # Actualizar campos adicionales
+                if x_response:
+                    pago.response_code = x_response
+                if x_response_reason_text:
+                    pago.response_message = x_response_reason_text
+                if x_approval_code:
+                    pago.transaction_id = x_approval_code
+                
+            except ValueError:
+                logger.warning(f"x_cod_response no es un número válido: {x_cod_response}")
+        
+        db.commit()
+        
+        logger.info(f"✅ Pago confirmado exitosamente: ref_payco={ref_payco}, estado={pago.estado.value}, cod_response={x_cod_response}")
+        
+        # Enviar notificación en background (si es necesario)
         if pago:
             factura = db.query(Facturacion).filter(Facturacion.id == pago.factura_id).first()
             if factura:
-                # Aquí necesitarías obtener el usuario, por ahora solo log
-                logger.info(f"Pago confirmado: {ref_payco}, notificación pendiente")
+                logger.info(f"Pago confirmado: ref_payco={ref_payco}, factura_id={factura.id}, notificación pendiente")
         
-        return {"status": "success", "message": "Confirmación procesada"}
+        return {"status": "success", "message": "Confirmación procesada", "ref_payco": ref_payco}
         
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error en confirmación de pago: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error en confirmación de pago: {str(e)}", exc_info=True)
+        # Retornar 200 para que ePayco no reintente en caso de error interno
+        # (pero deberíamos loguear el error para investigar)
+        return {"status": "error", "message": f"Error al procesar confirmación: {str(e)}"}
 
 @router.get("/{pago_id}/status", response_model=PagoStatusResponse)
 async def get_payment_status(
@@ -392,6 +650,7 @@ async def get_payment_status(
 ):
     """
     Consultar estado de un pago específico
+    Si el pago no tiene bank_url, intenta consultarlo desde ePayco
     """
     pago = db.query(Pagos).filter(Pagos.id == pago_id).first()
     
@@ -402,6 +661,16 @@ async def get_payment_status(
     factura = db.query(Facturacion).filter(Facturacion.id == pago.factura_id).first()
     if not factura:
         raise HTTPException(status_code=404, detail="Factura no encontrada")
+    
+    # Si el pago no tiene bank_url y es PSE, intentar consultarlo desde ePayco
+    if pago.metodo_pago == "PSE" and not pago.bank_url and pago.estado in [EstadoPago.pendiente, EstadoPago.procesando]:
+        try:
+            pse_service = PSEPaymentService(db)
+            pago_actualizado = await pse_service.refresh_payment_from_epayco(pago)
+            if pago_actualizado:
+                pago = pago_actualizado
+        except Exception as e:
+            logger.warning(f"No se pudo actualizar pago desde ePayco: {str(e)}")
     
     return PagoStatusResponse(
         pago_id=pago.id,

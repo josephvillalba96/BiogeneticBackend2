@@ -25,6 +25,8 @@ class Settings(BaseSettings):
     EPAYCO_PRIVATE_KEY: str = Field(..., description="ePayco Private Key")
     EPAYCO_TEST_MODE: bool = Field(True, description="ePayco Test Mode")
     EPAYCO_MERCHANT_ID: str = Field(..., description="ePayco Merchant ID")
+    EPAYCO_APIFY_BASE_URL: str = Field(..., description="ePayco Apify API Base URL")
+    BASE_URL_CONFIRMATION: str = Field(default="", description="Base URL for payment confirmation callbacks")
 
     # Email Configuration
     SMTP_SERVER: str = "smtp.gmail.com"
@@ -36,9 +38,9 @@ class Settings(BaseSettings):
 
 
     # URLs
-    BASE_URL: str = Field(..., description="Base URL of the application")
-    PAYMENT_RESPONSE_URL: str = Field(..., description="Payment response callback URL")
-    PAYMENT_CONFIRMATION_URL: str = Field(..., description="Payment confirmation callback URL")
+    BASE_URL: str = Field(default="http://localhost:8000", description="Base URL of the application")
+    PAYMENT_RESPONSE_URL: str = Field(default="", description="Payment response callback URL")
+    PAYMENT_CONFIRMATION_URL: str = Field(default="", description="Payment confirmation callback URL")
 
     @field_validator("*", mode="before")
     @classmethod

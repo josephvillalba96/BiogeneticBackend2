@@ -37,3 +37,6 @@ ENV/
 .DS_Store
 Thumbs.db 
 .env
+
+.cursor/rules/kluster-code-verify.mdc
+.kluster

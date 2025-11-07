@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, EmailStr
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from datetime import datetime
 from decimal import Decimal
 from app.schemas.base_schema import BaseSchema
@@ -24,10 +24,32 @@ class PagoCreate(PagoBase):
     address: Optional[str] = Field(None, description="Dirección del pagador")
 
 class PagoPSECreate(BaseModel):
-    """Esquema específico para crear pago PSE"""
+    """Esquema específico para crear pago PSE - permite que otra persona pague la factura"""
     factura_id: int = Field(..., description="ID de la factura")
-    city: Optional[str] = Field("Bogotá", description="Ciudad del pagador")
-    address: Optional[str] = Field("Dirección no especificada", description="Dirección del pagador")
+    full_name: str = Field(..., description="Nombre completo del pagador")
+    email: EmailStr = Field(..., description="Email del pagador")
+    phone: Optional[str] = Field(None, description="Teléfono del pagador")
+    address: str = Field(..., description="Dirección del pagador")
+    doc_type: str = Field(..., description="Tipo de documento (CC, CE, NIT, etc.)")
+    document: str = Field(..., description="Número de documento del pagador")
+    city: str = Field(..., description="Ciudad del pagador")
+    bank_id: Optional[str] = Field(None, description="ID del banco seleccionado para PSE")
+
+class PagoDaviplataCreate(BaseModel):
+    """Esquema específico para crear pago DaviPlata - permite que otra persona pague la factura"""
+    factura_id: int = Field(..., description="ID de la factura")
+    full_name: str = Field(..., description="Nombre completo del pagador")
+    email: EmailStr = Field(..., description="Email del pagador")
+    phone: str = Field(..., description="Teléfono del pagador (requerido para DaviPlata)")
+    address: str = Field(..., description="Dirección del pagador")
+    doc_type: str = Field(..., description="Tipo de documento (CC, CE, etc.)")
+    document: str = Field(..., description="Número de documento del pagador")
+    city: str = Field(..., description="Ciudad del pagador")
+
+class DaviPlataConfirmOTP(BaseModel):
+    """Esquema para confirmar OTP de pago DaviPlata"""
+    ref_payco: str = Field(..., description="Referencia del pago en ePayco (ref_payco)")
+    otp: str = Field(..., description="Código OTP recibido en la aplicación DaviPlata")
 
 class PagoUpdate(BaseModel):
     """Esquema para actualizar un pago"""
@@ -94,6 +116,16 @@ class PSEPaymentResponse(BaseModel):
     bank_name: str
     status: str
     message: str
+
+class DaviPlataOTPConfirmResponse(BaseModel):
+    """Esquema para respuesta de confirmación OTP DaviPlata"""
+    success: bool
+    ref_payco: str
+    pago_id: int
+    estado: str
+    response_code: Optional[str] = None
+    response_message: Optional[str] = None
+    data: Optional[Dict[str, Any]] = None
 
 class PaymentConfirmationResponse(BaseModel):
     """Esquema para confirmación de pago"""
