@@ -6,7 +6,7 @@ from app.models.user import User
 from app.schemas.input_output_schema import InputCreate, InputUpdate, OutputCreate
 from app.services import role_service
 from fastapi import HTTPException, status
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Tuple
 import logging
 from datetime import datetime, date
 from sqlalchemy import and_, or_, func, between, cast, String
@@ -44,24 +44,30 @@ def get_inputs(db: Session, current_user: Optional[User] = None, skip: int = 0, 
     
     return query.offset(skip).limit(limit).all()
 
-def get_inputs_by_user(db: Session, user_id: int, current_user: Optional[User] = None, skip: int = 0, limit: int = 100) -> List[Input]:
+def get_inputs_by_user(db: Session, user_id: int, current_user: Optional[User] = None, skip: int = 0, limit: int = 100) -> Tuple[List[Input], int]:
     """
     Obtiene los inputs de un usuario específico incluyendo información detallada del toro.
     Si se proporciona un usuario y no es administrador, verifica que sea el mismo usuario.
     """
+    if limit is None or limit <= 0:
+        limit = 1
+
     # Si hay un usuario y no es administrador, verificar que sea el mismo usuario
     if current_user and not role_service.is_admin(current_user) and current_user.id != user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permiso para ver los inputs de este usuario"
         )
-    
-    # Consulta con joins para obtener información del toro y su raza
-    return db.query(Input).filter(
-        Input.user_id == user_id
-    ).options(
+
+    query = db.query(Input).filter(Input.user_id == user_id).options(
         joinedload(Input.bull).joinedload(Bull.race)
-    ).offset(skip).limit(limit).all()
+    )
+
+    total = query.count()
+
+    inputs = query.order_by(Input.created_at.desc()).offset(skip).limit(limit).all()
+
+    return inputs, total
 
 def get_inputs_by_bull(db: Session, bull_id: int, current_user: Optional[User] = None, skip: int = 0, limit: int = 100) -> List[Input]:
     """

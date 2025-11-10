@@ -8,7 +8,7 @@ from app.models.input_output import InputStatus
 from app.schemas.input_output_schema import (
     InputSchema, InputCreate, InputUpdate, 
     OutputSchema, OutputCreate, OutputUpdate,
-    InputFilter, InputDetailSchema
+    InputFilter, InputDetailSchema, PaginatedInputsResponse
 )
 from typing import List, Optional, Dict, Any
 import logging
@@ -113,7 +113,7 @@ async def filter_inputs(
             detail=f"Error al filtrar inputs: {str(e)}"
         )
 
-@router.get("/user/{user_id}", response_model=List[InputSchema])
+@router.get("/user/{user_id}", response_model=PaginatedInputsResponse)
 async def read_user_inputs(
     user_id: int,
     request: Request,
@@ -130,16 +130,18 @@ async def read_user_inputs(
     - Los administradores pueden ver los inputs de cualquier usuario
     """
     try:
-        inputs = input_service.get_inputs_by_user(
+        if limit is None or limit <= 0:
+            limit = 1
+
+        inputs, total = input_service.get_inputs_by_user(
             db, 
             user_id=user_id, 
             current_user=current_user,
             skip=skip, 
             limit=limit
         )
-        
-        # Convertir cada input a esquema, ignorando los que no se puedan convertir
-        input_schemas = []
+        input_schemas: List[InputSchema] = []
+
         for input_obj in inputs:
             try:
                 schema = InputSchema.from_orm(input_obj)
@@ -148,13 +150,21 @@ async def read_user_inputs(
             except Exception as e:
                 logger = logging.getLogger(__name__)
                 logger.error(f"Error al convertir input {input_obj.id} a esquema: {str(e)}")
-                # Continuar con el siguiente input
-        
-        return input_schemas
+
+        total_pages = (total + limit - 1) // limit if total > 0 else 0
+        current_page = (skip // limit) + 1 if total > 0 else 0
+
+        return PaginatedInputsResponse(
+            total=total,
+            limit=limit,
+            skip=skip,
+            total_pages=total_pages,
+            current_page=current_page,
+            items=input_schemas
+        )
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error(f"Error al obtener inputs del usuario {user_id}: {str(e)}")
-        
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al obtener inputs: {str(e)}"

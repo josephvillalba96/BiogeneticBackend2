@@ -198,14 +198,18 @@ class OutputDetailSchema(BaseModel):
     output_date: datetime
     quantity_output: Decimal
     remark: Optional[str] = None
-    escalarilla: str
-    lote: str
-    quantity_received: Decimal
-    bull_id: int
-    user_id: int
-    created_at: datetime
-    updated_at: datetime
 
     class Config:
         orm_mode = True
+        json_encoders = {Decimal: lambda v: str(v)}
+
+class PaginatedInputsResponse(BaseModel):
+    total: int
+    limit: int
+    skip: int
+    total_pages: int
+    current_page: int
+    items: List[InputSchema]
+
+    class Config:
         json_encoders = {Decimal: lambda v: str(v)}
