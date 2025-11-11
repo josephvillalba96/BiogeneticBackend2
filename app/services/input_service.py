@@ -65,7 +65,7 @@ def get_inputs_by_user(db: Session, user_id: int, current_user: Optional[User] =
 
     total = query.count()
 
-    inputs = query.order_by(Input.created_at.desc()).offset(skip).limit(limit).all()
+    inputs = query.order_by(Input.fv.desc(), Input.created_at.desc()).offset(skip).limit(limit).all()
 
     return inputs, total
 
