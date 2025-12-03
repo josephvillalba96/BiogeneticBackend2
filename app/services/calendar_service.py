@@ -495,6 +495,36 @@ def get_calendar_tasks_by_date(
         .all()
     )
 
+def get_calendar_tasks_by_month(
+    db: Session,
+    year: int,
+    month: int
+) -> List[CalendarTask]:
+    """Obtiene todas las tareas de un mes específico sin importar el cliente"""
+    from calendar import monthrange
+    
+    # Calcular el primer y último día del mes
+    first_day = date(year, month, 1)
+    last_day = date(year, month, monthrange(year, month)[1])
+    
+    # Obtener todas las tareas que se solapen con el rango del mes
+    # Una tarea se solapa si: start_date <= last_day AND end_date >= first_day
+    return (
+        db.query(CalendarTask)
+        .options(
+            selectinload(CalendarTask.client),
+            selectinload(CalendarTask.creator),
+        )
+        .filter(
+            and_(
+                CalendarTask.start_date <= last_day,
+                CalendarTask.end_date >= first_day
+            )
+        )
+        .order_by(CalendarTask.start_date, CalendarTask.start_time)
+        .all()
+    )
+
 def toggle_task_status(
     db: Session,
     task_id: int

@@ -227,9 +227,6 @@ def update_bull(db: Session, bull_id: int, bull: BullUpdate, current_user: User)
             detail="No tienes permiso para modificar este toro"
         )
 
-    old_lote = db_bull.lote
-    old_escalerilla = db_bull.escalerilla
-
     # Actualizar los campos
     update_data = bull.dict(exclude_unset=True, exclude={"status"}, by_alias=False)
 
@@ -240,17 +237,6 @@ def update_bull(db: Session, bull_id: int, bull: BullUpdate, current_user: User)
     # Actualizar los campos básicos
     for key, value in update_data.items():
         setattr(db_bull, key, value)
-
-    lote_changed = "lote" in update_data and db_bull.lote != old_lote
-    escalerilla_changed = "escalerilla" in update_data and db_bull.escalerilla != old_escalerilla
-
-    if lote_changed or escalerilla_changed:
-        inputs_to_update = db.query(Input).filter(Input.bull_id == db_bull.id).all()
-        for input_item in inputs_to_update:
-            if lote_changed and db_bull.lote is not None:
-                input_item.lote = db_bull.lote
-            if escalerilla_changed and db_bull.escalerilla is not None:
-                input_item.escalarilla = db_bull.escalerilla
 
     # Manejar específicamente el campo status
     if bull.status is not None:

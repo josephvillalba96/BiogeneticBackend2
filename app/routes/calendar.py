@@ -345,6 +345,31 @@ async def get_calendar_tasks_by_date_range(
     )
     return tasks
 
+@router.get("/tasks/month/{year}/{month}", response_model=List[CalendarTaskSchema])
+async def get_calendar_tasks_by_month(
+    year: int,
+    month: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user_from_token)
+):
+    """Obtiene todas las tareas de un mes específico sin importar el cliente"""
+    # Validar que el mes esté en el rango válido
+    if month < 1 or month > 12:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El mes debe estar entre 1 y 12"
+        )
+    
+    # Validar que el año sea válido
+    if year < 2000 or year > 2100:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El año debe estar entre 2000 y 2100"
+        )
+    
+    tasks = calendar_service.get_calendar_tasks_by_month(db, year, month)
+    return tasks
+
 @router.get("/tasks/search", response_model=CalendarTaskListResponse)
 async def search_calendar_tasks(
     q: Optional[str] = None,
