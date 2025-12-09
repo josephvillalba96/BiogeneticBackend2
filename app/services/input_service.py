@@ -69,10 +69,21 @@ def get_inputs_by_user(db: Session, user_id: int, current_user: Optional[User] =
 
     return inputs, total
 
-def get_inputs_by_bull(db: Session, bull_id: int, current_user: Optional[User] = None, skip: int = 0, limit: int = 100) -> List[Input]:
+def get_inputs_by_bull(db: Session, bull_id: int, current_user: Optional[User] = None, search_query: Optional[str] = None, skip: int = 0, limit: int = 100) -> List[Input]:
     """
     Obtiene los inputs de un toro específico.
     Si se proporciona un usuario y no es administrador, verifica que el toro le pertenezca.
+    
+    Args:
+        db: Sesión de la base de datos
+        bull_id: ID del toro
+        current_user: Usuario actual para verificación de permisos
+        search_query: Término de búsqueda para filtrar por lote, escalarilla u otros campos
+        skip: Número de registros a omitir (paginación)
+        limit: Número máximo de registros a devolver (paginación)
+    
+    Returns:
+        Lista de inputs del toro filtrados según el parámetro search_query
     """
     # Verificar que el toro exista
     bull = db.query(Bull).filter(Bull.id == bull_id).first()
@@ -89,7 +100,24 @@ def get_inputs_by_bull(db: Session, bull_id: int, current_user: Optional[User] =
             detail="No tienes permiso para ver los inputs de este toro"
         )
     
-    return db.query(Input).filter(Input.bull_id == bull_id).offset(skip).limit(limit).all()
+    # Consulta base filtrada por bull_id
+    query = db.query(Input).filter(Input.bull_id == bull_id)
+    
+    # Aplicar filtro de búsqueda si se proporciona
+    if search_query:
+        search_term = f"%{search_query.lower()}%"
+        query = query.filter(
+            or_(
+                func.lower(Input.lote).like(search_term),
+                func.lower(Input.escalarilla).like(search_term),
+                func.lower(cast(Input.quantity_received, String)).like(search_term),
+                func.lower(cast(Input.quantity_taken, String)).like(search_term),
+                func.lower(cast(Input.total, String)).like(search_term),
+                func.lower(cast(Input.id, String)).like(search_term)
+            )
+        )
+    
+    return query.offset(skip).limit(limit).all()
 
 def filter_inputs(db: Session, search_query: Optional[str] = None, date_from: Optional[datetime] = None, date_to: Optional[datetime] = None, status: Optional[str] = None, user_id: Optional[int] = None, current_user: Optional[User] = None, skip: int = 0, limit: int = 100) -> List[Dict[str, Any]]:
     """

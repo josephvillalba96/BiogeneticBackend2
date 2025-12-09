@@ -85,6 +85,9 @@ class BullDetailSchema(BaseModel):
     description: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+    recibida: float = Field(default=0.0, description="Total de cantidad recibida de todas las entradas asociadas al toro")
+    utilizada: float = Field(default=0.0, description="Total de cantidad utilizada de todas las entradas asociadas al toro")
+    disponible: float = Field(default=0.0, description="Total de cantidad disponible de todas las entradas asociadas al toro")
     user: UserInfoSchema
     
     class Config:

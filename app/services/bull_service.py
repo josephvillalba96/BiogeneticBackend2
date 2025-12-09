@@ -117,6 +117,18 @@ def get_bulls(
             except Exception as e:
                 logging.error(f"Error al obtener el sexo del toro {bull.id}: {str(e)}")
             
+            # Calcular totales de entradas asociadas al toro
+            totales = db.query(
+                func.coalesce(func.sum(Input.quantity_received), 0).label('total_recibida'),
+                func.coalesce(func.sum(Input.quantity_taken), 0).label('total_utilizada'),
+                func.coalesce(func.sum(Input.quantity_received - Input.quantity_taken), 0).label('total_disponible')
+            ).filter(Input.bull_id == bull.id).first()
+            
+            # Extraer valores de totales, manejando None
+            total_recibida = float(totales.total_recibida) if totales and totales.total_recibida is not None else 0.0
+            total_utilizada = float(totales.total_utilizada) if totales and totales.total_utilizada is not None else 0.0
+            total_disponible = float(totales.total_disponible) if totales and totales.total_disponible is not None else 0.0
+            
             # Crear diccionario con todos los datos
             bull_data = {
                 "id": bull.id,
@@ -132,6 +144,9 @@ def get_bulls(
                 "status": bull.status.value if bull.status else None,
                 "created_at": bull.created_at,
                 "updated_at": bull.updated_at,
+                "recibida": total_recibida,
+                "utilizada": total_utilizada,
+                "disponible": total_disponible,
                 "user": {
                     "id": row.user_id,
                     "full_name": row.user_full_name,

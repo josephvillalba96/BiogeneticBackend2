@@ -174,6 +174,7 @@ async def read_user_inputs(
 async def read_bull_inputs(
     bull_id: int,
     request: Request,
+    search: Optional[str] = None,
     skip: int = 0, 
     limit: int = 100, 
     db: Session = Depends(get_db),
@@ -181,6 +182,9 @@ async def read_bull_inputs(
 ):
     """
     Obtiene los inputs de un toro específico.
+    
+    Parámetros:
+    - search: Término de búsqueda para filtrar por lote, escalarilla u otros campos de la entrada
     
     Restricciones de acceso:
     - Los usuarios normales solo pueden ver los inputs de sus propios toros
@@ -191,6 +195,7 @@ async def read_bull_inputs(
             db, 
             bull_id=bull_id, 
             current_user=current_user,
+            search_query=search,
             skip=skip, 
             limit=limit
         )
