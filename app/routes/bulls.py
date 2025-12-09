@@ -417,6 +417,7 @@ async def create_bull_for_client(
 async def get_bulls_by_client(
     client_id: int,
     request: Request,
+    search: Optional[str] = None,
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1),
     db: Session = Depends(get_db),
@@ -427,11 +428,12 @@ async def get_bulls_by_client(
     
     Args:
         client_id: ID del cliente cuyos toros se quieren obtener
+        search: Término de búsqueda para filtrar por nombre, registro, lote, escalerilla u otros campos del toro
         skip: Número de registros a omitir (paginación)
         limit: Número máximo de registros a devolver (paginación)
     
     Returns:
-        Lista de toros con información detallada
+        Lista de toros con información detallada incluyendo totales de entradas (Recibida, Utilizada, Disponible)
         
     Raises:
         HTTPException: Si el usuario no tiene permisos o hay problemas con los datos
@@ -441,6 +443,7 @@ async def get_bulls_by_client(
             db=db,
             client_id=client_id,
             current_user=current_user,
+            search_query=search,
             skip=skip,
             limit=limit
         )

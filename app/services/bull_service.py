@@ -5,7 +5,7 @@ from app.models.user import User, Role
 from app.models.bull import Race, Sex
 from app.services import role_service
 from typing import List, Optional, Dict, Any
-from sqlalchemy import or_, func, and_
+from sqlalchemy import or_, func, and_, cast, String
 from fastapi import HTTPException, status
 from datetime import datetime
 import logging
@@ -469,6 +469,7 @@ def get_bulls_by_client(
     db: Session,
     client_id: int,
     current_user: Optional[User] = None,
+    search_query: Optional[str] = None,
     skip: int = 0,
     limit: int = 100
 ) -> List[Dict[str, Any]]:
@@ -479,11 +480,12 @@ def get_bulls_by_client(
         db: Sesión de la base de datos
         client_id: ID del cliente cuyos toros se quieren obtener
         current_user: Usuario actual para verificación de permisos
+        search_query: Término de búsqueda para filtrar por nombre, registro, lote, escalerilla u otros campos
         skip: Número de registros a omitir (paginación)
         limit: Número máximo de registros a devolver (paginación)
     
     Returns:
-        Lista de diccionarios con información detallada de los toros
+        Lista de diccionarios con información detallada de los toros incluyendo totales de entradas
         
     Raises:
         HTTPException: Si el usuario no tiene permisos o el cliente no existe
@@ -519,6 +521,19 @@ def get_bulls_by_client(
         Bull.user_id == client_id
     )
     
+    # Aplicar filtro de búsqueda si se proporciona
+    if search_query:
+        search_term = f"%{search_query.lower()}%"
+        query = query.filter(
+            or_(
+                func.lower(Bull.name).like(search_term),
+                func.lower(cast(Bull.registration_number, String)).like(search_term),
+                func.lower(cast(Bull.lote, String)).like(search_term),
+                func.lower(cast(Bull.escalerilla, String)).like(search_term),
+                func.lower(cast(Bull.description, String)).like(search_term)
+            )
+        )
+    
     # Aplicar paginación
     query = query.order_by(Bull.created_at.desc()).offset(skip).limit(limit)
     
@@ -530,6 +545,18 @@ def get_bulls_by_client(
     for row in results:
         try:
             bull = row[0]  # Obtener el objeto Bull
+            
+            # Calcular totales de entradas asociadas al toro
+            totales = db.query(
+                func.coalesce(func.sum(Input.quantity_received), 0).label('total_recibida'),
+                func.coalesce(func.sum(Input.quantity_taken), 0).label('total_utilizada'),
+                func.coalesce(func.sum(Input.quantity_received - Input.quantity_taken), 0).label('total_disponible')
+            ).filter(Input.bull_id == bull.id).first()
+            
+            # Extraer valores de totales, manejando None
+            total_recibida = float(totales.total_recibida) if totales and totales.total_recibida is not None else 0.0
+            total_utilizada = float(totales.total_utilizada) if totales and totales.total_utilizada is not None else 0.0
+            total_disponible = float(totales.total_disponible) if totales and totales.total_disponible is not None else 0.0
             
             # Crear diccionario con todos los datos
             bull_data = {
@@ -545,7 +572,10 @@ def get_bulls_by_client(
                 "sex_name": row.sex_name,
                 "status": bull.status.value if bull.status else None,
                 "created_at": bull.created_at,
-                "updated_at": bull.updated_at
+                "updated_at": bull.updated_at,
+                "recibida": total_recibida,
+                "utilizada": total_utilizada,
+                "disponible": total_disponible
             }
             
             bulls_data.append(bull_data)
