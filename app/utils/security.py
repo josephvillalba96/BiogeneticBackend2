@@ -96,6 +96,8 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         self.exclude_paths = exclude_paths or [
             "/api/auth/login", 
             "/api/auth/register", 
+            "/api/pagos/confirmation",  # Webhook de ePayco, no requiere autenticación
+            "/api/pagos/response",  # Respuesta del banco, no requiere autenticación
             "/docs", 
             "/openapi.json", 
             "/", 
