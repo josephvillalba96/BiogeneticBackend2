@@ -483,20 +483,8 @@ async def create_payment(
         
         logger.info(f"Pago creado: ID={nuevo_pago.id}, factura_id={payment_data.factura_id}, ref_payco={payment_data.ref_payco}")
         
-        return PagoResponse(
-            id=nuevo_pago.id,
-            factura_id=nuevo_pago.factura_id,
-            monto=nuevo_pago.monto,
-            fecha_pago=nuevo_pago.fecha_pago,
-            estado=nuevo_pago.estado,
-            metodo_pago=nuevo_pago.metodo_pago,
-            referencia=nuevo_pago.referencia,
-            observaciones=nuevo_pago.observaciones,
-            ref_payco=nuevo_pago.ref_payco,
-            ip=nuevo_pago.ip,
-            created_at=nuevo_pago.created_at,
-            updated_at=nuevo_pago.updated_at
-        )
+        # Usar model_validate para crear la respuesta desde el modelo ORM
+        return PagoResponse.model_validate(nuevo_pago)
         
     except HTTPException:
         raise

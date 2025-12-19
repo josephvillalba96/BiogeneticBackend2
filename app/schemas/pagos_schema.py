@@ -60,33 +60,36 @@ class PagoUpdate(BaseModel):
 
 class PagoResponse(BaseSchema):
     """Esquema para respuesta de pago"""
-    monto: Optional[Decimal]
-    fecha_pago: Optional[datetime]
-    estado: Optional[EstadoPago]
-    metodo_pago: Optional[str]
-    referencia: Optional[str]
-    observaciones: Optional[str]
-    doc_type: Optional[str]
-    document: Optional[str]
-    name: Optional[str]
-    last_name: Optional[str]
-    email: Optional[str]
-    phone: Optional[str]
-    city: Optional[str]
-    address: Optional[str]
-    ip: Optional[str]
-    currency: Optional[str]
-    description: Optional[str]
-    value: Optional[Decimal]
-    tax: Optional[Decimal]
-    tax_base: Optional[Decimal]
-    ref_payco: Optional[str]
-    transaction_id: Optional[str]
-    bank_name: Optional[str]
-    bank_url: Optional[str]
-    response_code: Optional[str]
-    response_message: Optional[str]
-    factura_id: Optional[int]
+    monto: Optional[Decimal] = None
+    fecha_pago: Optional[datetime] = None
+    estado: Optional[EstadoPago] = None
+    metodo_pago: Optional[str] = None
+    referencia: Optional[str] = None
+    observaciones: Optional[str] = None
+    doc_type: Optional[str] = None
+    document: Optional[str] = None
+    name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    city: Optional[str] = None
+    address: Optional[str] = None
+    ip: Optional[str] = None
+    currency: Optional[str] = None
+    description: Optional[str] = None
+    value: Optional[Decimal] = None
+    tax: Optional[Decimal] = None
+    tax_base: Optional[Decimal] = None
+    ref_payco: Optional[str] = None
+    transaction_id: Optional[str] = None
+    bank_name: Optional[str] = None
+    bank_url: Optional[str] = None
+    response_code: Optional[str] = None
+    response_message: Optional[str] = None
+    factura_id: Optional[int] = None
+    
+    class Config:
+        from_attributes = True
 
 class PagoListResponse(BaseSchema):
     """Esquema para lista de pagos"""
