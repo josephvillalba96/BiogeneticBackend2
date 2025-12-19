@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from decimal import Decimal
+from datetime import datetime
 import logging
 
 from app.database.base import get_db
@@ -11,22 +12,14 @@ from app.models.facturacion import Facturacion, Pagos, EstadoPago
 from app.routes.auth import get_current_user_from_token
 from app.schemas.pagos_schema import (
     PagoCreate,
-    PagoPSECreate,
-    PagoDaviplataCreate,
-    DaviPlataConfirmOTP,
     PagoResponse,
     PagoListResponse,
     PagoUpdate,
     PagoStatusResponse,
-    PSEPaymentResponse,
-    DaviPlataOTPConfirmResponse,
     PaymentConfirmationResponse,
-    BanksResponse
+    PagoSimpleCreate
 )
 from app.services.epayco_service import (
-    EpaycoConfigService,
-    PSEPaymentService,
-    DaviPlataPaymentService,
     PaymentConfirmationService,
     PaymentNotificationService
 )
@@ -34,266 +27,6 @@ from app.services.epayco_service import (
 router = APIRouter(prefix="/pagos", tags=["pagos"])
 
 logger = logging.getLogger(__name__)
-
-@router.post("/pse/create", response_model=PSEPaymentResponse)
-async def create_pse_payment(
-    pse_data: PagoPSECreate,
-    request: Request,
-    background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_from_token)
-):
-    """
-    Crear pago PSE para una factura
-    
-    - **factura_id**: ID de la factura a pagar
-    - **city**: Ciudad del pagador (opcional, por defecto Bogotá)
-    - **address**: Dirección del pagador (opcional)
-    
-    Retorna la información necesaria para redirigir al banco.
-    """
-    try:
-        pse_service = PSEPaymentService(db)
-        request_ip = request.client.host
-        
-        result = await pse_service.create_pse_payment(
-            factura_id=pse_data.factura_id,
-            user=current_user,
-            request_ip=request_ip,
-            pse_data=pse_data
-        )
-        
-        return PSEPaymentResponse(**result)
-        
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
-
-@router.post("/daviplata/create", response_model=PSEPaymentResponse)
-async def create_daviplata_payment(
-    daviplata_data: PagoDaviplataCreate,
-    request: Request,
-    background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_from_token)
-):
-    """
-    Crear pago DaviPlata para una factura
-    
-    - **factura_id**: ID de la factura a pagar
-    - **full_name**: Nombre completo del pagador
-    - **email**: Email del pagador
-    - **phone**: Teléfono del pagador (requerido para DaviPlata)
-    - **address**: Dirección del pagador
-    - **doc_type**: Tipo de documento (CC, CE, etc.)
-    - **document**: Número de documento del pagador
-    - **city**: Ciudad del pagador
-    
-    Retorna la información necesaria. El usuario debe revisar su aplicación DaviPlata para completar el pago.
-    """
-    try:
-        daviplata_service = DaviPlataPaymentService(db)
-        request_ip = request.client.host
-        
-        result = await daviplata_service.create_daviplata_payment(
-            factura_id=daviplata_data.factura_id,
-            user=current_user,
-            request_ip=request_ip,
-            daviplata_data=daviplata_data
-        )
-        
-        return PSEPaymentResponse(**result)
-        
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        logger.error(f"Error al crear pago DaviPlata: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
-
-@router.post("/daviplata/confirm-otp", response_model=DaviPlataOTPConfirmResponse)
-async def confirm_daviplata_otp(
-    otp_data: DaviPlataConfirmOTP,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_from_token)
-):
-    """
-    Confirmar OTP de pago DaviPlata
-    
-    - **ref_payco**: Referencia del pago en ePayco
-    - **otp**: Código OTP recibido en la aplicación DaviPlata
-    
-    Retorna el resultado de la confirmación del pago.
-    """
-    try:
-        daviplata_service = DaviPlataPaymentService(db)
-        
-        result = await daviplata_service.confirm_daviplata_otp(
-            ref_payco=otp_data.ref_payco,
-            otp=otp_data.otp
-        )
-        
-        return DaviPlataOTPConfirmResponse(**result)
-        
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        logger.error(f"Error al confirmar OTP DaviPlata: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
-
-@router.get("/pse/create/{factura_id}", response_class=HTMLResponse)
-async def create_pse_payment_form(
-    factura_id: int,
-    request: Request,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_from_token)
-):
-    """
-    Formulario para crear pago PSE
-    """
-    # Obtener factura
-    factura = db.query(Facturacion).filter(Facturacion.id == factura_id).first()
-    if not factura:
-        raise HTTPException(status_code=404, detail="Factura no encontrada")
-    
-    if factura.estado.value == "pagado":
-        return """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Factura Ya Pagada</title>
-            <meta charset="UTF-8">
-            <style>
-                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-                .error { color: #e74c3c; }
-                .success { color: #27ae60; }
-            </style>
-        </head>
-        <body>
-            <h1 class="error">❌ Factura Ya Pagada</h1>
-            <p>Esta factura ya ha sido pagada.</p>
-            <a href="/api/facturacion/">Volver a Facturas</a>
-        </body>
-        </html>
-        """
-    
-    return f"""
-    <!DOCTYPE html>
-    <html lang="es">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Pago PSE - Factura {factura.id_factura}</title>
-        <style>
-            body {{
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                max-width: 600px;
-                margin: 0 auto;
-                padding: 20px;
-                background-color: #f5f5f5;
-            }}
-            .container {{
-                background: white;
-                padding: 30px;
-                border-radius: 10px;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            }}
-            h1 {{ color: #2c3e50; text-align: center; }}
-            .factura-info {{
-                background: #ecf0f1;
-                padding: 20px;
-                border-radius: 5px;
-                margin: 20px 0;
-            }}
-            .form-group {{ margin-bottom: 20px; }}
-            label {{ display: block; margin-bottom: 5px; font-weight: bold; }}
-            input, textarea {{
-                width: 100%;
-                padding: 10px;
-                border: 2px solid #ddd;
-                border-radius: 5px;
-                font-size: 16px;
-            }}
-            .btn {{
-                background-color: #3498db;
-                color: white;
-                padding: 15px 30px;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-                font-size: 16px;
-                width: 100%;
-            }}
-            .btn:hover {{ background-color: #2980b9; }}
-            .amount {{ font-size: 24px; font-weight: bold; color: #27ae60; }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>💳 Pago PSE</h1>
-            
-            <div class="factura-info">
-                <h3>Información de la Factura</h3>
-                <p><strong>ID Factura:</strong> {factura.id_factura}</p>
-                <p><strong>Monto:</strong> <span class="amount">${factura.monto_pagar:,.2f} COP</span></p>
-                <p><strong>Descripción:</strong> {factura.descripcion or 'Servicios BioGenetic'}</p>
-            </div>
-            
-            <form id="pseForm">
-                <div class="form-group">
-                    <label for="city">Ciudad:</label>
-                    <input type="text" id="city" name="city" value="Bogotá" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="address">Dirección (opcional):</label>
-                    <textarea id="address" name="address" rows="3" placeholder="Ingrese su dirección completa"></textarea>
-                </div>
-                
-                <button type="submit" class="btn">🚀 Proceder con Pago PSE</button>
-            </form>
-        </div>
-        
-        <script>
-            document.getElementById('pseForm').addEventListener('submit', async function(e) {{
-                e.preventDefault();
-                
-                const formData = new FormData(this);
-                const data = {{
-                    factura_id: {factura_id},
-                    city: formData.get('city'),
-                    address: formData.get('address')
-                }};
-                
-                try {{
-                    const response = await fetch('/api/pagos/pse/create', {{
-                        method: 'POST',
-                        headers: {{
-                            'Content-Type': 'application/json',
-                            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
-                        }},
-                        body: JSON.stringify(data)
-                    }});
-                    
-                    if (response.ok) {{
-                        const result = await response.json();
-                        if (result.bank_url) {{
-                            window.location.href = result.bank_url;
-                        }} else {{
-                            alert('Error: No se recibió URL del banco');
-                        }}
-                    }} else {{
-                        const error = await response.json();
-                        alert('Error: ' + error.detail);
-                    }}
-                }} catch (error) {{
-                    alert('Error de conexión: ' + error.message);
-                }}
-            }});
-        </script>
-    </body>
-    </html>
-    """
 
 @router.get("/response", response_class=HTMLResponse)
 async def payment_response(
@@ -682,6 +415,96 @@ async def get_payment_status(
         bank_url=pago.bank_url
     )
 
+@router.post("", response_model=PagoResponse)
+async def create_payment(
+    payment_data: PagoSimpleCreate,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """
+    Crea un nuevo registro de pago con datos mínimos.
+    
+    Este endpoint permite registrar pagos de forma flexible, almacenando solo los datos proporcionados.
+    Los campos opcionales se pueden completar posteriormente.
+    
+    - **factura_id**: ID de la factura (requerido)
+    - **ref_payco**: Referencia de ePayco (opcional)
+    - **metodo_pago**: Método de pago (por defecto 'epayco')
+    - **monto**: Monto del pago (opcional)
+    - **estado**: Estado del pago (por defecto 'pendiente')
+    - **observaciones**: Observaciones adicionales (opcional)
+    
+    La fecha del pago se establece automáticamente y la IP del cliente se captura del request.
+    """
+    try:
+        # Verificar que la factura exista si se proporciona factura_id
+        if payment_data.factura_id:
+            factura = db.query(Facturacion).filter(Facturacion.id == payment_data.factura_id).first()
+            if not factura:
+                raise HTTPException(status_code=404, detail="Factura no encontrada")
+        
+        # Obtener IP del cliente
+        client_ip = request.client.host if request.client else None
+        
+        # Construir observaciones si no se proporcionan
+        observaciones = payment_data.observaciones
+        if not observaciones:
+            observaciones = f"Pago procesado a través de {payment_data.metodo_pago}."
+            if payment_data.ref_payco:
+                observaciones += f" Referencia: {payment_data.ref_payco}."
+            observaciones += f" Estado inicial: {payment_data.estado}."
+            if payment_data.factura_id:
+                observaciones += f" Factura: {payment_data.factura_id}"
+        
+        # Convertir estado string a Enum
+        estado_enum = EstadoPago.pendiente
+        if payment_data.estado:
+            try:
+                estado_enum = EstadoPago(payment_data.estado.lower())
+            except ValueError:
+                # Si el estado no es válido, usar pendiente por defecto
+                estado_enum = EstadoPago.pendiente
+        
+        # Crear el pago
+        nuevo_pago = Pagos(
+            factura_id=payment_data.factura_id,
+            ref_payco=payment_data.ref_payco,
+            metodo_pago=payment_data.metodo_pago or "epayco",
+            monto=payment_data.monto,
+            estado=estado_enum,
+            observaciones=observaciones,
+            fecha_pago=datetime.now(),
+            ip=client_ip
+        )
+        
+        db.add(nuevo_pago)
+        db.commit()
+        db.refresh(nuevo_pago)
+        
+        logger.info(f"Pago creado: ID={nuevo_pago.id}, factura_id={payment_data.factura_id}, ref_payco={payment_data.ref_payco}")
+        
+        return PagoResponse(
+            id=nuevo_pago.id,
+            factura_id=nuevo_pago.factura_id,
+            monto=nuevo_pago.monto,
+            fecha_pago=nuevo_pago.fecha_pago,
+            estado=nuevo_pago.estado,
+            metodo_pago=nuevo_pago.metodo_pago,
+            referencia=nuevo_pago.referencia,
+            observaciones=nuevo_pago.observaciones,
+            ref_payco=nuevo_pago.ref_payco,
+            ip=nuevo_pago.ip,
+            created_at=nuevo_pago.created_at,
+            updated_at=nuevo_pago.updated_at
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error al crear pago: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error al crear pago: {str(e)}")
+
 @router.get("/", response_model=List[PagoListResponse])
 async def list_payments(
     skip: int = Query(0, ge=0),
@@ -728,36 +551,3 @@ async def update_payment(
     db.refresh(pago)
     
     return pago
-
-
-@router.get("/banks", response_model=BanksResponse)
-async def get_pse_banks():
-    """
-    Obtener lista de entidades bancarias disponibles para PSE
-    
-    Retorna una lista de entidades bancarias colombianas que soportan pagos PSE.
-    Si la API de ePayco no está disponible, se retorna una lista estática de bancos comunes.
-    """
-    try:
-        epayco_service = EpaycoConfigService()
-        result = epayco_service.get_pse_banks()
-        
-        if result["success"]:
-            return BanksResponse(
-                success=True,
-                banks=result["banks"],
-                message=result["message"],
-                total=len(result["banks"])
-            )
-        else:
-            raise HTTPException(
-                status_code=500, 
-                detail=result["message"]
-            )
-            
-    except Exception as e:
-        logger.error(f"Error al obtener entidades bancarias: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error al obtener entidades bancarias: {str(e)}"
-        )

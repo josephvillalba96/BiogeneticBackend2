@@ -60,10 +60,10 @@ class PagoUpdate(BaseModel):
 
 class PagoResponse(BaseSchema):
     """Esquema para respuesta de pago"""
-    monto: Decimal
-    fecha_pago: datetime
-    estado: EstadoPago
-    metodo_pago: str
+    monto: Optional[Decimal]
+    fecha_pago: Optional[datetime]
+    estado: Optional[EstadoPago]
+    metodo_pago: Optional[str]
     referencia: Optional[str]
     observaciones: Optional[str]
     doc_type: Optional[str]
@@ -86,7 +86,7 @@ class PagoResponse(BaseSchema):
     bank_url: Optional[str]
     response_code: Optional[str]
     response_message: Optional[str]
-    factura_id: int
+    factura_id: Optional[int]
 
 class PagoListResponse(BaseSchema):
     """Esquema para lista de pagos"""
@@ -167,3 +167,12 @@ class BanksResponse(BaseModel):
     banks: List[BankInfo] = Field(..., description="Lista de entidades bancarias")
     message: str = Field(..., description="Mensaje descriptivo")
     total: int = Field(..., description="Total de bancos disponibles")
+
+class PagoSimpleCreate(BaseModel):
+    """Esquema simple para crear un pago con datos mínimos"""
+    factura_id: int = Field(..., description="ID de la factura")
+    ref_payco: Optional[str] = Field(None, description="Referencia de ePayco")
+    metodo_pago: str = Field(default="epayco", description="Método de pago (por defecto 'epayco')")
+    monto: Optional[Decimal] = Field(None, description="Monto del pago")
+    estado: str = Field(default="pendiente", description="Estado del pago (por defecto 'pendiente')")
+    observaciones: Optional[str] = Field(None, description="Observaciones del pago")

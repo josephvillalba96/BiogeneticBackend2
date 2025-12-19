@@ -93,19 +93,19 @@ class Pagos(Base, BaseModel):
     __tablename__ = "pagos"
     
     # Relación con Facturacion (muchos a uno)
-    factura_id = Column(ForeignKey("facturacion.id"), nullable=False)
+    factura_id = Column(ForeignKey("facturacion.id"), nullable=True, comment="ID de la factura")
     
     # Monto del pago
-    monto = Column(Numeric(10, 2), nullable=False)
+    monto = Column(Numeric(10, 2), nullable=True, comment="Monto del pago")
     
     # Fecha del pago
-    fecha_pago = Column(DateTime, nullable=False, default=datetime.now)
+    fecha_pago = Column(DateTime, nullable=True, default=datetime.now, comment="Fecha del pago")
     
     # Estado del pago
-    estado = Column(Enum(EstadoPago), nullable=False, default=EstadoPago.pendiente)
+    estado = Column(Enum(EstadoPago), nullable=True, default=EstadoPago.pendiente, comment="Estado del pago")
     
     # Método de pago
-    metodo_pago = Column(String(50), nullable=False, comment="Efectivo, Transferencia, Tarjeta, PSE, etc.")
+    metodo_pago = Column(String(50), nullable=True, comment="Efectivo, Transferencia, Tarjeta, PSE, epayco, etc.")
     
     # Referencia o número de transacción
     referencia = Column(String(100), nullable=True, comment="Número de referencia del pago")
