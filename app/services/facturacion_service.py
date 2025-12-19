@@ -2,11 +2,12 @@ from sqlalchemy.orm import Session
 from typing import List, Optional, Tuple, Dict, Any
 from datetime import datetime
 from decimal import Decimal
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from sqlalchemy import and_, or_
 
 from app.models.facturacion import Facturacion, FacturaDetalle, EstadoFactura
 from app.models.user import User, Role
+from app.services import role_service
 from app.schemas.facturacion_schema import (
     FacturaFormData, 
     FacturaItemCreate, 
@@ -302,7 +303,7 @@ def can_access_factura(user: User, factura: Facturacion) -> bool:
     Verifica si un usuario puede acceder a una factura específica
     """
     # Admin y veterinarios pueden ver todas las facturas
-    if user.is_admin or has_veterinario_role(user):
+    if role_service.is_admin(user) or has_veterinario_role(user):
         return True
     
     # Los clientes solo pueden ver sus propias facturas
@@ -320,6 +321,7 @@ def has_veterinario_role(user: User) -> bool:
 def list_facturas(
     db: Session, 
     user: User, 
+    cliente_id: Optional[int] = None,
     skip: int = 0, 
     limit: int = 100,
     estado: Optional[str] = None,
@@ -328,14 +330,87 @@ def list_facturas(
 ) -> Tuple[List[Facturacion], int]:
     """
     Lista facturas con paginación y filtros
+    
+    Args:
+        db: Sesión de la base de datos
+        user: Usuario autenticado
+        cliente_id: ID del cliente para filtrar (solo para admin/veterinario, opcional)
+        skip: Número de registros a omitir
+        limit: Número máximo de registros
+        estado: Filtrar por estado
+        fecha_desde: Filtrar desde fecha
+        fecha_hasta: Filtrar hasta fecha
+    
+    Returns:
+        Tupla con (lista de facturas, total de registros)
     """
     # Construir query base
     query = db.query(Facturacion)
     
+    # Verificar si el usuario es admin o veterinario
+    is_admin_or_vet = role_service.is_admin(user) or has_veterinario_role(user)
+    
     # Aplicar filtros de acceso
-    if not (user.is_admin or has_veterinario_role(user)):
-        # Los clientes solo ven sus propias facturas
+    if not is_admin_or_vet:
+        # Los clientes solo ven sus propias facturas (ignoran cliente_id si lo envían)
         query = query.filter(Facturacion.cliente_id == user.id)
+    else:
+        # Admin y veterinarios pueden ver todas las facturas o filtrar por cliente_id
+        if cliente_id is not None:
+            # Verificar que el cliente exista
+            cliente = db.query(User).filter(User.id == cliente_id).first()
+            if not cliente:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Cliente no encontrado"
+                )
+            query = query.filter(Facturacion.cliente_id == cliente_id)
+    
+    # Aplicar filtros opcionales
+    if estado:
+        query = query.filter(Facturacion.estado == estado)
+    
+    if fecha_desde:
+        query = query.filter(Facturacion.fecha_generacion >= fecha_desde)
+    
+    if fecha_hasta:
+        query = query.filter(Facturacion.fecha_generacion <= fecha_hasta)
+    
+    # Obtener total de registros
+    total = query.count()
+    
+    # Aplicar paginación y ordenamiento
+    facturas = query.order_by(Facturacion.fecha_generacion.desc()).offset(skip).limit(limit).all()
+    
+    return facturas, total
+
+def get_my_facturas(
+    db: Session, 
+    user: User, 
+    skip: int = 0, 
+    limit: int = 100,
+    estado: Optional[str] = None,
+    fecha_desde: Optional[datetime] = None,
+    fecha_hasta: Optional[datetime] = None
+) -> Tuple[List[Facturacion], int]:
+    """
+    Obtiene las facturas del cliente autenticado.
+    Este método es exclusivo para clientes y siempre filtra por el ID del usuario autenticado.
+    
+    Args:
+        db: Sesión de la base de datos
+        user: Usuario autenticado (cliente)
+        skip: Número de registros a omitir (paginación)
+        limit: Número máximo de registros a devolver (paginación)
+        estado: Filtrar por estado (opcional)
+        fecha_desde: Filtrar desde fecha (opcional)
+        fecha_hasta: Filtrar hasta fecha (opcional)
+    
+    Returns:
+        Tupla con (lista de facturas, total de registros)
+    """
+    # Construir query base filtrando exclusivamente por el ID del cliente autenticado
+    query = db.query(Facturacion).filter(Facturacion.cliente_id == user.id)
     
     # Aplicar filtros opcionales
     if estado:

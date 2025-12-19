@@ -23,6 +23,7 @@ from app.services.facturacion_service import (
     create_factura_from_form,
     get_factura_by_id,
     list_facturas,
+    get_my_facturas,
     update_factura,
     delete_factura,
     get_factura_completa,
@@ -83,6 +84,7 @@ async def create_factura(
 
 @router.get("", response_model=List[FacturacionListResponse])
 async def list_facturas_endpoint(
+    cliente_id: Optional[int] = Query(None, description="ID del cliente para filtrar facturas (solo para admin/veterinario)"),
     skip: int = Query(0, ge=0, description="Número de registros a omitir"),
     limit: int = Query(100, ge=1, le=1000, description="Número máximo de registros"),
     estado: Optional[str] = Query(None, description="Filtrar por estado"),
@@ -94,17 +96,60 @@ async def list_facturas_endpoint(
     """
     Listar facturas con paginación y filtros
     
+    - **cliente_id**: ID del cliente para filtrar facturas (solo para admin/veterinario, opcional)
     - **skip**: Número de registros a omitir
     - **limit**: Número máximo de registros (máximo 1000)
     - **estado**: Filtrar por estado (pendiente, vencido, pagado)
     - **fecha_desde**: Filtrar desde fecha
     - **fecha_hasta**: Filtrar hasta fecha
     
-    Los clientes solo ven sus propias facturas.
-    Los administradores y veterinarios ven todas las facturas.
+    Los clientes solo ven sus propias facturas (ignoran el parámetro cliente_id si lo envían).
+    Los administradores y veterinarios ven todas las facturas, o pueden filtrar por cliente_id.
     """
     try:
         facturas, total = list_facturas(
+            db=db,
+            user=current_user,
+            cliente_id=cliente_id,
+            skip=skip,
+            limit=limit,
+            estado=estado,
+            fecha_desde=fecha_desde,
+            fecha_hasta=fecha_hasta
+        )
+        
+        return facturas
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al listar facturas: {str(e)}")
+
+
+@router.get("/my-facturas", response_model=List[FacturacionListResponse])
+async def get_my_facturas_endpoint(
+    skip: int = Query(0, ge=0, description="Número de registros a omitir"),
+    limit: int = Query(100, ge=1, le=1000, description="Número máximo de registros"),
+    estado: Optional[str] = Query(None, description="Filtrar por estado"),
+    fecha_desde: Optional[datetime] = Query(None, description="Fecha desde"),
+    fecha_hasta: Optional[datetime] = Query(None, description="Fecha hasta"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user_from_token)
+):
+    """
+    Obtiene las facturas del cliente autenticado.
+    
+    Este endpoint es exclusivo para clientes. No requiere enviar el ID del cliente,
+    ya que toma la información del usuario desde el token de autenticación.
+    Solo devuelve las facturas que pertenecen al cliente autenticado.
+    
+    - **skip**: Número de registros a omitir
+    - **limit**: Número máximo de registros (máximo 1000)
+    - **estado**: Filtrar por estado (pendiente, vencido, pagado)
+    - **fecha_desde**: Filtrar desde fecha
+    - **fecha_hasta**: Filtrar hasta fecha
+    
+    El ID del cliente se obtiene automáticamente del token de autenticación.
+    """
+    try:
+        facturas, total = get_my_facturas(
             db=db,
             user=current_user,
             skip=skip,
@@ -116,7 +161,7 @@ async def list_facturas_endpoint(
         
         return facturas
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al listar facturas: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error al obtener facturas: {str(e)}")
 
 
 @router.post("/from-form", response_model=FacturacionResponse)
