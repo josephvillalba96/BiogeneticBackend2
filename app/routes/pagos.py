@@ -230,6 +230,16 @@ async def payment_confirmation(
         # === VALIDACIÓN DE FIRMA (SECURITY) ===
         # Extraer campos necesarios para validar la firma
         x_ref_payco = webhook_data.get('x_ref_payco')
+        
+        # Log detallado del valor recibido
+        logger.info(f"🔍 EXTRACCIÓN DE x_ref_payco:")
+        logger.info(f"   x_ref_payco desde webhook_data: '{x_ref_payco}' (tipo: {type(x_ref_payco).__name__})")
+        logger.info(f"   Todos los campos que contienen 'ref' o 'payco': {[k for k in webhook_data.keys() if 'ref' in k.lower() or 'payco' in k.lower()]}")
+        if 'x_ref_payco' in query_params:
+            logger.info(f"   x_ref_payco desde query_params: '{query_params.get('x_ref_payco')}' (tipo: {type(query_params.get('x_ref_payco')).__name__})")
+        if 'x_ref_payco' in form_data:
+            logger.info(f"   x_ref_payco desde form_data: '{form_data.get('x_ref_payco')}' (tipo: {type(form_data.get('x_ref_payco')).__name__})")
+        
         x_transaction_id = webhook_data.get('x_transaction_id', '')
         x_amount = webhook_data.get('x_amount', '')
         x_currency_code = webhook_data.get('x_currency_code', '')
@@ -237,6 +247,7 @@ async def payment_confirmation(
         
         if not x_ref_payco:
             logger.error("Webhook recibido sin x_ref_payco/ref_payco")
+            logger.error(f"   Todos los campos disponibles: {list(webhook_data.keys())}")
             raise HTTPException(status_code=400, detail="x_ref_payco es requerido")
         
         # Validar firma de ePayco
@@ -311,16 +322,50 @@ async def payment_confirmation(
             logger.error(f"❌ x_ref_payco está vacío o es None")
             return {"status": "error", "message": "x_ref_payco es requerido"}
         
-        # Búsqueda directa: ref_payco = x_ref_payco
-        # Convertir x_ref_payco a string para comparación
+        # Normalizar x_ref_payco: convertir a string y eliminar espacios
         ref_payco_buscar = str(ref_payco).strip() if ref_payco else None
         
         if not ref_payco_buscar:
             logger.error(f"❌ x_ref_payco está vacío después de normalizar")
             return {"status": "error", "message": "x_ref_payco es requerido"}
         
-        # Búsqueda simple: ref_payco = x_ref_payco
+        logger.info(f"🔍 Búsqueda: ref_payco_buscar='{ref_payco_buscar}' (tipo: {type(ref_payco_buscar).__name__})")
+        
+        # Intentar múltiples formas de búsqueda para asegurar que encontremos el pago
+        pago = None
+        
+        # 1. Búsqueda exacta directa
         pago = db.query(Pagos).filter(Pagos.ref_payco == ref_payco_buscar).first()
+        if pago:
+            logger.info(f"✅ Pago encontrado con búsqueda exacta")
+        
+        # 2. Si no se encuentra, intentar con cast a string en BD
+        if not pago:
+            from sqlalchemy import func, String
+            pago = db.query(Pagos).filter(
+                func.cast(Pagos.ref_payco, String) == ref_payco_buscar
+            ).first()
+            if pago:
+                logger.info(f"✅ Pago encontrado con cast a string")
+        
+        # 3. Si aún no se encuentra, intentar con trim (eliminar espacios)
+        if not pago:
+            from sqlalchemy import func, String
+            pago = db.query(Pagos).filter(
+                func.trim(func.cast(Pagos.ref_payco, String)) == ref_payco_buscar
+            ).first()
+            if pago:
+                logger.info(f"✅ Pago encontrado con trim")
+        
+        # 4. Si aún no se encuentra, intentar como int (si es posible)
+        if not pago:
+            try:
+                ref_payco_int = int(ref_payco_buscar)
+                pago = db.query(Pagos).filter(Pagos.ref_payco == ref_payco_int).first()
+                if pago:
+                    logger.info(f"✅ Pago encontrado como int")
+            except (ValueError, TypeError):
+                pass
         
         if not pago:
             logger.error(f"❌ Pago NO encontrado donde ref_payco = '{ref_payco_buscar}'")
@@ -330,17 +375,17 @@ async def payment_confirmation(
             # Buscar pagos recientes para debugging
             pagos_recientes = db.query(Pagos).filter(
                 Pagos.ref_payco.isnot(None)
-            ).order_by(Pagos.id.desc()).limit(20).all()
+            ).order_by(Pagos.id.desc()).limit(30).all()
             
-            logger.error(f"   Últimos 20 pagos con ref_payco en BD:")
+            logger.error(f"   Últimos 30 pagos con ref_payco en BD:")
             for p in pagos_recientes:
                 ref_payco_bd = str(p.ref_payco).strip() if p.ref_payco else None
                 es_igual = ref_payco_bd == ref_payco_buscar
-                logger.error(f"     - Pago ID={p.id}, ref_payco='{ref_payco_bd}', igual? {es_igual}")
+                logger.error(f"     - Pago ID={p.id}, ref_payco='{ref_payco_bd}' (tipo BD: {type(p.ref_payco).__name__}), igual? {es_igual}, factura_id={p.factura_id}")
             
             return {"status": "warning", "message": f"Pago con ref_payco {ref_payco_buscar} no encontrado"}
         
-        logger.info(f"✅ Pago encontrado: pago_id={pago.id}, ref_payco='{pago.ref_payco}'")
+        logger.info(f"✅ Pago encontrado: pago_id={pago.id}, ref_payco='{pago.ref_payco}' (tipo: {type(pago.ref_payco).__name__}), estado_actual={pago.estado.value if pago.estado else 'None'}")
         
         # === OBTENER FACTURA DEL PAGO ===
         # El pago SIEMPRE tiene factura_id, obtener la factura directamente
@@ -546,22 +591,40 @@ async def payment_confirmation(
                 logger.warning(f"No se pudo actualizar monto: x_amount_ok={x_amount_ok}")
         
         # Log antes del commit para verificar cambios
-        logger.info(f"📝 Estado ANTES del commit - Pago ID={pago.id}: estado={pago.estado.value}, response_code={pago.response_code}")
+        logger.info(f"📝 Estado ANTES del commit:")
+        logger.info(f"   Pago ID={pago.id}: estado={pago.estado.value if pago.estado else 'None'}, response_code={pago.response_code}")
         if factura:
-            logger.info(f"📝 Estado ANTES del commit - Factura ID={factura.id}: estado={factura.estado.value}")
+            logger.info(f"   Factura ID={factura.id}: estado={factura.estado.value if factura.estado else 'None'}")
         
-        # Commit de los cambios
+        # Asegurar que hay cambios para guardar
+        if not estado_actualizado:
+            logger.warning(f"⚠️ ADVERTENCIA: No se actualizó el estado del pago. x_response={x_response}, x_cod_response={x_cod_response}")
+        
+        # Commit de los cambios - CRÍTICO: debe ejecutarse siempre
         try:
+            # Verificar que el pago tenga cambios
+            if pago in db.dirty:
+                logger.info(f"📝 Pago marcado como modificado en la sesión")
+            if factura and factura in db.dirty:
+                logger.info(f"📝 Factura marcada como modificada en la sesión")
+            
             db.commit()
-            logger.info(f"✅ Commit exitoso - Pago ID={pago.id}, estado={pago.estado.value}")
+            logger.info(f"✅ Commit exitoso - Pago ID={pago.id}, estado={pago.estado.value if pago.estado else 'None'}")
             
             # Refrescar objetos para verificar que se guardaron
             db.refresh(pago)
-            logger.info(f"✅ Pago refrescado - ID={pago.id}, estado={pago.estado.value}, ref_payco={pago.ref_payco}")
+            logger.info(f"✅ Pago refrescado - ID={pago.id}, estado={pago.estado.value if pago.estado else 'None'}, ref_payco={pago.ref_payco}")
             
             if factura:
                 db.refresh(factura)
-                logger.info(f"✅ Factura refrescada - ID={factura.id}, estado={factura.estado.value}, id_factura={factura.id_factura}")
+                logger.info(f"✅ Factura refrescada - ID={factura.id}, estado={factura.estado.value if factura.estado else 'None'}, id_factura={factura.id_factura}")
+                
+                # Verificación final: consultar desde BD para confirmar
+                factura_verificada = db.query(Facturacion).filter(Facturacion.id == factura.id).first()
+                pago_verificado = db.query(Pagos).filter(Pagos.id == pago.id).first()
+                logger.info(f"🔍 Verificación final desde BD:")
+                logger.info(f"   Pago ID={pago_verificado.id}: estado={pago_verificado.estado.value if pago_verificado.estado else 'None'}")
+                logger.info(f"   Factura ID={factura_verificada.id}: estado={factura_verificada.estado.value if factura_verificada.estado else 'None'}")
         except Exception as commit_error:
             logger.error(f"❌ Error al hacer commit: {str(commit_error)}", exc_info=True)
             db.rollback()
