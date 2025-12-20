@@ -1727,6 +1727,96 @@ class PaymentConfirmationService:
         except Exception as e:
             logger.error(f"Error al actualizar factura {factura_id}: {str(e)}")
             return False
+    
+    def get_transaction_detail(self, reference_payco: str) -> Optional[Dict[str, Any]]:
+        """
+        Consultar detalles de una transacción usando referencePayco
+        
+        Args:
+            reference_payco: Referencia de ePayco (ref_payco) de la transacción
+            
+        Returns:
+            Dict con los detalles de la transacción o None si no se encuentra
+            
+        Example:
+            transaction_detail = service.get_transaction_detail("30604419")
+        """
+        try:
+            if not self.apify_base_url:
+                logger.error("EPAYCO_APIFY_BASE_URL no configurada")
+                return None
+            
+            # Endpoint para consultar detalles de transacción
+            url = f"{self.apify_base_url}/transaction/detail"
+            
+            # Preparar headers con autenticación
+            headers = self._get_auth_headers()
+            
+            # Preparar body con el filtro
+            # Nota: Aunque es un GET, ePayco requiere el body JSON según el curl proporcionado
+            payload = {
+                "filter": {
+                    "referencePayco": reference_payco
+                }
+            }
+            
+            logger.info(f"Consultando detalles de transacción: referencePayco={reference_payco}")
+            logger.debug(f"URL: {url}")
+            logger.debug(f"Payload: {payload}")
+            
+            # Realizar la petición GET con body JSON
+            # Nota: requests.get no soporta body directamente, pero podemos usar requests.request
+            response = requests.request(
+                method="GET",
+                url=url,
+                headers=headers,
+                json=payload,
+                timeout=30
+            )
+            
+            logger.info(f"Respuesta de ePayco - Status: {response.status_code}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                logger.info(f"✅ Detalles de transacción obtenidos exitosamente para referencePayco={reference_payco}")
+                logger.debug(f"Datos recibidos: {data}")
+                return data
+            elif response.status_code == 404:
+                logger.warning(f"⚠️ Transacción no encontrada: referencePayco={reference_payco}")
+                return None
+            elif response.status_code == 401:
+                logger.error(f"❌ Error de autenticación al consultar transacción: referencePayco={reference_payco}")
+                # Intentar refrescar el token y reintentar una vez
+                self._token = None
+                self._token_expires_at = None
+                headers = self._get_auth_headers()
+                response = requests.request(
+                    method="GET",
+                    url=url,
+                    headers=headers,
+                    json=payload,
+                    timeout=30
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    logger.info(f"✅ Detalles obtenidos después de refrescar token: referencePayco={reference_payco}")
+                    return data
+                else:
+                    logger.error(f"❌ Error después de refrescar token: {response.status_code}")
+                    return None
+            else:
+                logger.error(f"❌ Error al consultar transacción: Status {response.status_code}, Response: {response.text[:500]}")
+                return None
+                
+        except requests.exceptions.Timeout:
+            logger.error(f"❌ Timeout al consultar transacción: referencePayco={reference_payco}")
+            return None
+        except requests.exceptions.RequestException as e:
+            logger.error(f"❌ Error de conexión al consultar transacción: {str(e)}")
+            return None
+        except Exception as e:
+            logger.error(f"❌ Error inesperado al consultar transacción: {str(e)}", exc_info=True)
+            return None
 
 class PaymentNotificationService:
     """Servicio para notificaciones de pago por email"""

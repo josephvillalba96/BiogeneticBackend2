@@ -558,6 +558,57 @@ async def payment_confirmation(
         # (pero deberíamos loguear el error para investigar)
         return {"status": "error", "message": f"Error al procesar confirmación: {str(e)}"}
 
+@router.get("/transaction/{reference_payco}/detail")
+async def get_transaction_detail(
+    reference_payco: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user_from_token)
+):
+    """
+    Consultar detalles de una transacción desde ePayco usando referencePayco
+    
+    Este endpoint consulta directamente a la API de ePayco Apify para obtener
+    los detalles completos de una transacción usando su referencia (ref_payco).
+    
+    Args:
+        reference_payco: Referencia de ePayco (ref_payco) de la transacción
+        
+    Returns:
+        Dict con los detalles completos de la transacción desde ePayco
+        
+    Example:
+        GET /api/pagos/transaction/30604419/detail
+    """
+    try:
+        # Inicializar servicio de confirmación que tiene el método para consultar transacciones
+        confirmation_service = PaymentConfirmationService(db)
+        
+        # Consultar detalles de la transacción
+        transaction_detail = confirmation_service.get_transaction_detail(reference_payco)
+        
+        if transaction_detail is None:
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Transacción con referencePayco {reference_payco} no encontrada en ePayco"
+            )
+        
+        logger.info(f"✅ Detalles de transacción obtenidos: referencePayco={reference_payco}")
+        
+        return {
+            "status": "success",
+            "reference_payco": reference_payco,
+            "transaction_detail": transaction_detail
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error al consultar detalles de transacción: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al consultar detalles de transacción: {str(e)}"
+        )
+
 @router.get("/{pago_id}/status", response_model=PagoStatusResponse)
 async def get_payment_status(
     pago_id: int,
