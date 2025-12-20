@@ -313,6 +313,14 @@ async def payment_confirmation(
             ).order_by(Pagos.fecha_pago.desc()).first()
             
             if pago:
+                # Validar que el ref_payco del webhook coincida con el almacenado en BD
+                if pago.ref_payco and pago.ref_payco != ref_payco:
+                    logger.error(f"❌ VALIDACIÓN FALLIDA: ref_payco del webhook ({ref_payco}) no coincide con el almacenado en BD ({pago.ref_payco})")
+                    raise HTTPException(
+                        status_code=400, 
+                        detail=f"El ref_payco del webhook ({ref_payco}) no coincide con el almacenado en la base de datos ({pago.ref_payco})"
+                    )
+                
                 # Actualizar el pago con el ref_payco del webhook si no lo tiene
                 if not pago.ref_payco:
                     pago.ref_payco = ref_payco
@@ -324,6 +332,24 @@ async def payment_confirmation(
             factura = db.query(Facturacion).filter(Facturacion.id == pago.factura_id).first()
             if factura:
                 logger.info(f"✅ Factura obtenida desde pago: id_factura={factura.id_factura}")
+        
+        # === VALIDACIÓN CRÍTICA: Verificar que x_ref_payco coincida con el almacenado en BD ===
+        if pago and pago.ref_payco:
+            # Normalizar ambos valores para comparación (convertir a string y eliminar espacios)
+            ref_payco_webhook = str(ref_payco).strip()
+            ref_payco_bd = str(pago.ref_payco).strip()
+            
+            if ref_payco_webhook != ref_payco_bd:
+                logger.error(f"❌ VALIDACIÓN FALLIDA: x_ref_payco del webhook no coincide con el almacenado en BD")
+                logger.error(f"   Webhook ref_payco: '{ref_payco_webhook}' (tipo: {type(ref_payco_webhook).__name__})")
+                logger.error(f"   BD ref_payco: '{ref_payco_bd}' (tipo: {type(ref_payco_bd).__name__})")
+                logger.error(f"   Pago ID: {pago.id}, Factura ID: {pago.factura_id}")
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"El x_ref_payco del webhook ({ref_payco_webhook}) no coincide con el almacenado en la base de datos ({ref_payco_bd}). Pago ID: {pago.id}"
+                )
+            else:
+                logger.info(f"✅ Validación exitosa: x_ref_payco del webhook coincide con BD: {ref_payco_bd}")
         
         # Si no tenemos factura ni pago, retornar warning
         if not factura and not pago:

@@ -1732,6 +1732,9 @@ class PaymentConfirmationService:
         """
         Consultar detalles de una transacción usando referencePayco
         
+        Usa el endpoint de validación de ePayco:
+        https://secure.epayco.co/validation/v1/reference/{reference_payco}
+        
         Args:
             reference_payco: Referencia de ePayco (ref_payco) de la transacción
             
@@ -1739,38 +1742,23 @@ class PaymentConfirmationService:
             Dict con los detalles de la transacción o None si no se encuentra
             
         Example:
-            transaction_detail = service.get_transaction_detail("30604419")
+            transaction_detail = service.get_transaction_detail("474741b162ab95daf7e9aa95")
         """
         try:
-            if not self.apify_base_url:
-                logger.error("EPAYCO_APIFY_BASE_URL no configurada")
-                return None
+            # Endpoint de validación de ePayco
+            url = f"https://secure.epayco.co/validation/v1/reference/{reference_payco}"
             
-            # Endpoint para consultar detalles de transacción
-            url = f"{self.apify_base_url}/transaction/detail"
-            
-            # Preparar headers con autenticación
-            headers = self._get_auth_headers()
-            
-            # Preparar body con el filtro
-            # Nota: Aunque es un GET, ePayco requiere el body JSON según el curl proporcionado
-            payload = {
-                "filter": {
-                    "referencePayco": reference_payco
-                }
-            }
+            # Usar Basic Auth con las credenciales de ePayco
+            # No necesitamos token JWT para este endpoint, usa Basic Auth directamente
+            auth = HTTPBasicAuth(self.api_key, self.private_key)
             
             logger.info(f"Consultando detalles de transacción: referencePayco={reference_payco}")
             logger.debug(f"URL: {url}")
-            logger.debug(f"Payload: {payload}")
             
-            # Realizar la petición GET con body JSON
-            # Nota: requests.get no soporta body directamente, pero podemos usar requests.request
-            response = requests.request(
-                method="GET",
+            # Realizar la petición GET con Basic Auth
+            response = requests.get(
                 url=url,
-                headers=headers,
-                json=payload,
+                auth=auth,
                 timeout=30
             )
             
@@ -1780,30 +1768,18 @@ class PaymentConfirmationService:
                 data = response.json()
                 logger.info(f"✅ Detalles de transacción obtenidos exitosamente para referencePayco={reference_payco}")
                 logger.debug(f"Datos recibidos: {data}")
+                
+                # Extraer el campo 'data' si existe, o retornar toda la respuesta
+                if isinstance(data, dict) and 'data' in data:
+                    return data['data']
                 return data
             elif response.status_code == 404:
                 logger.warning(f"⚠️ Transacción no encontrada: referencePayco={reference_payco}")
                 return None
             elif response.status_code == 401:
                 logger.error(f"❌ Error de autenticación al consultar transacción: referencePayco={reference_payco}")
-                # Intentar refrescar el token y reintentar una vez
-                self._token = None
-                self._token_expires_at = None
-                headers = self._get_auth_headers()
-                response = requests.request(
-                    method="GET",
-                    url=url,
-                    headers=headers,
-                    json=payload,
-                    timeout=30
-                )
-                if response.status_code == 200:
-                    data = response.json()
-                    logger.info(f"✅ Detalles obtenidos después de refrescar token: referencePayco={reference_payco}")
-                    return data
-                else:
-                    logger.error(f"❌ Error después de refrescar token: {response.status_code}")
-                    return None
+                logger.error(f"Verificar que las credenciales de ePayco sean correctas")
+                return None
             else:
                 logger.error(f"❌ Error al consultar transacción: Status {response.status_code}, Response: {response.text[:500]}")
                 return None
