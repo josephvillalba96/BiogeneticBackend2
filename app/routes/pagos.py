@@ -167,484 +167,134 @@ async def payment_response(
         """
 
 @router.post("/confirmation")
-@router.get("/confirmation")  # Soporte para GET como fallback (aunque ePayco debería usar POST)
 async def payment_confirmation(
     request: Request,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
-    """
-    Webhook de confirmación de ePayco
-    
-    ePayco envía un POST a esta URL cuando el estado de un pago cambia.
-    Los datos pueden venir en el BODY como form data (application/x-www-form-urlencoded) 
-    o en los QUERY PARAMETERS de la URL.
-    
-    Campos que envía ePayco:
-    - x_ref_payco o ref_payco: Referencia única del pago (obligatorio)
-    - x_transaction_id: ID de transacción de ePayco
-    - x_amount: Monto de la transacción
-    - x_currency_code: Código de moneda (COP, USD, etc.)
-    - x_signature: Firma SHA256 para validar autenticidad
-    - x_response: Estado de la transacción (Aceptada, Rechazada, Pendiente, etc.)
-    - x_response_reason_text: Mensaje descriptivo del estado
-    - x_cod_response: Código numérico de respuesta (1=aceptada, 2=rechazada, 3=pendiente, 4=fallida)
-    - x_id_invoice: ID de la factura
-    - x_approval_code: Código de aprobación
-    - x_franchise: Método de pago (PSE, DaviPlata, etc.)
-    - x_bank_name: Nombre del banco (si aplica)
-    - x_transaction_date: Fecha de la transacción
-    
-    La URL de confirmación debe configurarse en ePayco y debe ser accesible públicamente.
-    """
     try:
-        # ePayco puede enviar los datos en el body (form data) o en los query parameters
-        # Intentar obtener del body primero, luego de query params
-        form_data = {}
+        # Obtener datos (form-data o query params)
         try:
             form_data = await request.form()
         except Exception:
-            pass  # Si no hay form data, continuar
-        
-        # También obtener de query parameters
-        # Los query params ya vienen decodificados por FastAPI, pero asegurémonos
+            form_data = {}
+
         query_params = dict(request.query_params)
-        
-        # Combinar ambos, dando prioridad al body si existe
-        # Si un campo existe en ambos, el form_data tiene prioridad
         webhook_data = {**query_params, **dict(form_data)}
-        
-        # Asegurar que los valores de string estén decodificados correctamente
-        # FastAPI ya decodifica los query params, pero por si acaso
-        for key, value in webhook_data.items():
-            if isinstance(value, str):
-                # Los valores ya deberían estar decodificados, pero asegurémonos
-                webhook_data[key] = value
-        
-        # Log completo de lo que recibe el webhook para debugging
-        logger.info(f"Webhook recibido desde IP: {request.client.host}")
-        logger.info(f"Datos recibidos del webhook (query params): {query_params}")
-        logger.debug(f"Datos recibidos del webhook (form data): {dict(form_data)}")
-        logger.debug(f"Datos combinados: {webhook_data}")
-        
-        # === VALIDACIÓN DE FIRMA (SECURITY) ===
-        # Extraer campos necesarios para validar la firma
-        x_ref_payco = webhook_data.get('x_ref_payco')
-        
-        # Log detallado del valor recibido
-        logger.info(f"🔍 EXTRACCIÓN DE x_ref_payco:")
-        logger.info(f"   x_ref_payco desde webhook_data: '{x_ref_payco}' (tipo: {type(x_ref_payco).__name__})")
-        logger.info(f"   Todos los campos que contienen 'ref' o 'payco': {[k for k in webhook_data.keys() if 'ref' in k.lower() or 'payco' in k.lower()]}")
-        if 'x_ref_payco' in query_params:
-            logger.info(f"   x_ref_payco desde query_params: '{query_params.get('x_ref_payco')}' (tipo: {type(query_params.get('x_ref_payco')).__name__})")
-        if 'x_ref_payco' in form_data:
-            logger.info(f"   x_ref_payco desde form_data: '{form_data.get('x_ref_payco')}' (tipo: {type(form_data.get('x_ref_payco')).__name__})")
-        
-        x_transaction_id = webhook_data.get('x_transaction_id', '')
-        x_amount = webhook_data.get('x_amount', '')
-        x_currency_code = webhook_data.get('x_currency_code', '')
-        x_signature = webhook_data.get('x_signature', '')
-        
-        if not x_ref_payco:
-            logger.error("Webhook recibido sin x_ref_payco/ref_payco")
-            logger.error(f"   Todos los campos disponibles: {list(webhook_data.keys())}")
-            raise HTTPException(status_code=400, detail="x_ref_payco es requerido")
-        
-        # Validar firma de ePayco
-        # ePayco puede enviar x_cust_id_cliente en el webhook, si no, usar el de configuración
+
+        # Campos obligatorios para firma
+        x_ref_payco = webhook_data.get("x_ref_payco")
+        x_transaction_id = webhook_data.get("x_transaction_id")
+        x_amount = webhook_data.get("x_amount")
+        x_currency_code = webhook_data.get("x_currency_code")
+        x_signature = webhook_data.get("x_signature")
+
+        if not all([x_ref_payco, x_transaction_id, x_amount, x_currency_code, x_signature]):
+            raise HTTPException(status_code=400, detail="Datos incompletos para validación de firma")
+
+        # === VALIDACIÓN SHA256 CORRECTA ===
         from app.config import settings
         import hashlib
-        
-        x_cust_id_cliente = webhook_data.get('x_cust_id_cliente') or settings.EPAYCO_PUBLIC_KEY
+
+        cust_id = settings.EPAYCO_PUBLIC_KEY
         p_key = settings.EPAYCO_PRIVATE_KEY
-        
-        # Construir string para firmar según documentación ePayco
-        # signature = hash('sha256', p_cust_id_cliente + '^' + p_key + '^' + x_ref_payco + '^' + x_transaction_id + '^' + x_amount + '^' + x_currency_code)
-        signature_string = f"{x_cust_id_cliente}^{p_key}^{x_ref_payco}^{x_transaction_id}^{x_amount}^{x_currency_code}"
-        calculated_signature = hashlib.sha256(signature_string.encode()).hexdigest()
-        
-        logger.info(f"Validando firma: x_signature={x_signature}, calculated={calculated_signature}")
-        logger.info(f"Valores usados: x_cust_id_cliente={x_cust_id_cliente}, x_ref_payco={x_ref_payco}, x_transaction_id={x_transaction_id}, x_amount={x_amount}, x_currency_code={x_currency_code}")
-        
-        # Si la firma no coincide, intentar sin x_transaction_id (algunos webhooks no lo incluyen)
-        if x_signature and calculated_signature != x_signature:
-            # Intentar sin x_transaction_id
-            signature_string_alt = f"{x_cust_id_cliente}^{p_key}^{x_ref_payco}^{x_amount}^{x_currency_code}"
-            calculated_signature_alt = hashlib.sha256(signature_string_alt.encode()).hexdigest()
-            
-            if calculated_signature_alt == x_signature:
-                logger.info(f"✅ Firma validada (sin transaction_id) para x_ref_payco={x_ref_payco}")
-            else:
-                logger.error(f"⚠️ Firma inválida! Webhook rechazado. x_ref_payco={x_ref_payco}")
-                logger.error(f"Firma recibida: {x_signature}")
-                logger.error(f"Firma calculada (con transaction_id): {calculated_signature}")
-                logger.error(f"Firma calculada (sin transaction_id): {calculated_signature_alt}")
-                # Por ahora, permitir el webhook pero loguear el error para debugging
-                # TODO: Revisar con ePayco la documentación exacta de la firma
-                logger.warning("⚠️ Firma no coincide, pero permitiendo el webhook para debugging")
-                # raise HTTPException(status_code=403, detail="Firma inválida")
-        
-        logger.info(f"✅ Firma validada correctamente para x_ref_payco={x_ref_payco}")
-        
-        # Usar ref_payco en adelante - guardar EXACTAMENTE el valor de x_ref_payco sin modificaciones
-        # El ref_payco en BD debe ser exactamente igual al x_ref_payco del webhook
-        ref_payco = str(x_ref_payco).strip() if x_ref_payco else None
-        
-        # Extraer otros campos importantes del webhook
-        x_response = webhook_data.get('x_response', '')
-        x_response_reason_text = webhook_data.get('x_response_reason_text', '')
-        x_cod_response = webhook_data.get('x_cod_response', '')
-        x_id_factura = webhook_data.get('x_id_factura', '') or webhook_data.get('x_id_invoice', '')
-        x_approval_code = webhook_data.get('x_approval_code', '')
-        x_franchise = webhook_data.get('x_franchise', '')
-        x_bank_name = webhook_data.get('x_bank_name', '')
-        x_amount_ok = webhook_data.get('x_amount_ok', '') or x_amount
-        
-        logger.info(f"Procesando confirmación: ref_payco={ref_payco}, x_id_factura={x_id_factura}, x_response={x_response}, x_amount_ok={x_amount_ok}")
-        
-        # === BUSCAR FACTURA POR x_id_factura (PRIORITARIO) ===
-        factura = None
-        if x_id_factura:
-            logger.info(f"Buscando factura por x_id_factura: {x_id_factura}")
-            factura = db.query(Facturacion).filter(Facturacion.id_factura == x_id_factura).first()
-            if factura:
-                logger.info(f"✅ Factura encontrada: id={factura.id}, id_factura={factura.id_factura}, monto_pagar={factura.monto_pagar}")
-            else:
-                logger.warning(f"⚠️ Factura no encontrada con x_id_factura: {x_id_factura}")
-        
-        # === BUSCAR PAGO POR ref_payco = x_ref_payco ===
-        # En la BD tenemos la columna ref_payco
-        # El webhook trae x_ref_payco
-        # Buscar el pago donde ref_payco = x_ref_payco (búsqueda simple y directa)
-        logger.info(f"🔍 Buscando pago donde ref_payco = x_ref_payco: '{ref_payco}'")
-        
-        if not ref_payco:
-            logger.error(f"❌ x_ref_payco está vacío o es None")
-            return {"status": "error", "message": "x_ref_payco es requerido"}
-        
-        # Normalizar x_ref_payco: convertir a string y eliminar espacios
-        ref_payco_buscar = str(ref_payco).strip() if ref_payco else None
-        
-        if not ref_payco_buscar:
-            logger.error(f"❌ x_ref_payco está vacío después de normalizar")
-            return {"status": "error", "message": "x_ref_payco es requerido"}
-        
-        logger.info(f"🔍 Búsqueda: ref_payco_buscar='{ref_payco_buscar}' (tipo: {type(ref_payco_buscar).__name__})")
-        
-        # Intentar múltiples formas de búsqueda para asegurar que encontremos el pago
-        pago = None
-        
-        # 1. Búsqueda exacta directa
-        pago = db.query(Pagos).filter(Pagos.ref_payco == ref_payco_buscar).first()
-        if pago:
-            logger.info(f"✅ Pago encontrado con búsqueda exacta")
-        
-        # 2. Si no se encuentra, intentar con cast a string en BD
+
+        signature_string = (
+            f"{cust_id}^"
+            f"{p_key}^"
+            f"{x_ref_payco}^"
+            f"{x_transaction_id}^"
+            f"{x_amount}^"
+            f"{x_currency_code}"
+        )
+
+        calculated_signature = hashlib.sha256(
+            signature_string.encode("utf-8")
+        ).hexdigest()
+
+        if calculated_signature != x_signature:
+            raise HTTPException(status_code=403, detail="Firma inválida")
+
+        # Normalizar ref_payco (sin modificar contenido)
+        ref_payco = str(x_ref_payco).strip()
+
+        # Buscar pago
+        pago = db.query(Pagos).filter(Pagos.ref_payco == ref_payco).first()
         if not pago:
-            from sqlalchemy import func, String
-            pago = db.query(Pagos).filter(
-                func.cast(Pagos.ref_payco, String) == ref_payco_buscar
-            ).first()
-            if pago:
-                logger.info(f"✅ Pago encontrado con cast a string")
-        
-        # 3. Si aún no se encuentra, intentar con trim (eliminar espacios)
-        if not pago:
-            from sqlalchemy import func, String
-            pago = db.query(Pagos).filter(
-                func.trim(func.cast(Pagos.ref_payco, String)) == ref_payco_buscar
-            ).first()
-            if pago:
-                logger.info(f"✅ Pago encontrado con trim")
-        
-        # 4. Si aún no se encuentra, intentar como int (si es posible)
-        if not pago:
-            try:
-                ref_payco_int = int(ref_payco_buscar)
-                pago = db.query(Pagos).filter(Pagos.ref_payco == ref_payco_int).first()
-                if pago:
-                    logger.info(f"✅ Pago encontrado como int")
-            except (ValueError, TypeError):
-                pass
-        
-        if not pago:
-            logger.error(f"❌ Pago NO encontrado donde ref_payco = '{ref_payco_buscar}'")
-            logger.error(f"   x_ref_payco recibido: '{ref_payco}' (tipo: {type(ref_payco).__name__})")
-            logger.error(f"   x_ref_payco normalizado: '{ref_payco_buscar}'")
-            
-            # Buscar pagos recientes para debugging
-            pagos_recientes = db.query(Pagos).filter(
-                Pagos.ref_payco.isnot(None)
-            ).order_by(Pagos.id.desc()).limit(30).all()
-            
-            logger.error(f"   Últimos 30 pagos con ref_payco en BD:")
-            for p in pagos_recientes:
-                ref_payco_bd = str(p.ref_payco).strip() if p.ref_payco else None
-                es_igual = ref_payco_bd == ref_payco_buscar
-                logger.error(f"     - Pago ID={p.id}, ref_payco='{ref_payco_bd}' (tipo BD: {type(p.ref_payco).__name__}), igual? {es_igual}, factura_id={p.factura_id}")
-            
-            return {"status": "warning", "message": f"Pago con ref_payco {ref_payco_buscar} no encontrado"}
-        
-        logger.info(f"✅ Pago encontrado: pago_id={pago.id}, ref_payco='{pago.ref_payco}' (tipo: {type(pago.ref_payco).__name__}), estado_actual={pago.estado.value if pago.estado else 'None'}")
-        
-        # === OBTENER FACTURA DEL PAGO ===
-        # El pago SIEMPRE tiene factura_id, obtener la factura directamente
+            return {"status": "warning", "message": "Pago no encontrado"}
+
+        # Idempotencia básica
+        if pago.estado in [EstadoPago.completado, EstadoPago.fallido]:
+            return {"status": "ok", "message": "Webhook ya procesado"}
+
+        # Obtener factura
         if not pago.factura_id:
-            logger.error(f"❌ Pago no tiene factura_id asociada: pago_id={pago.id}, ref_payco={ref_payco}")
-            raise HTTPException(status_code=400, detail=f"Pago con ref_payco {ref_payco} no tiene factura asociada")
-        
-        factura = db.query(Facturacion).filter(Facturacion.id == pago.factura_id).first()
+            raise HTTPException(status_code=400, detail="Pago sin factura asociada")
+
+        factura = db.query(Facturacion).filter(
+            Facturacion.id == pago.factura_id
+        ).first()
+
         if not factura:
-            logger.error(f"❌ Factura no encontrada: factura_id={pago.factura_id}, pago_id={pago.id}")
-            raise HTTPException(status_code=400, detail=f"Factura asociada al pago no existe: factura_id={pago.factura_id}")
-        
-        logger.info(f"✅ Factura obtenida: id_factura={factura.id_factura}, factura_id={factura.id}")
-        
-        # Extraer bank_url del webhook si viene (puede venir en diferentes campos)
-        bank_url_webhook = webhook_data.get('urlbanco') or webhook_data.get('x_urlbanco') or webhook_data.get('bank_url') or webhook_data.get('x_bank_url')
-        bank_name_webhook = webhook_data.get('x_bank_name') or webhook_data.get('bank_name')
-        
-        # Si el pago no tiene bank_url y viene en el webhook, actualizarlo
-        if not pago.bank_url and bank_url_webhook:
-            pago.bank_url = bank_url_webhook
-            logger.info(f"✅ bank_url actualizado desde webhook: {bank_url_webhook}")
-        if not pago.bank_name and bank_name_webhook:
-            pago.bank_name = bank_name_webhook
-        
-        # === PROCESAR ESTADO SEGÚN x_response ===
-        # x_response: "Aceptada" → aprobado/completado, "Rechazada" → rechazado/fallido
-        from app.models.facturacion import EstadoFactura
-        
-        # Asegurar que pago existe antes de actualizar
-        if not pago:
-            logger.error(f"❌ No se puede actualizar estado: pago no encontrado. ref_payco={ref_payco}")
-            return {"status": "error", "message": "Pago no encontrado"}
-        
-        estado_actualizado = False
-        
-        # Procesar según x_response (prioritario)
-        if x_response:
-            x_response_upper = x_response.strip().upper()
-            logger.info(f"Procesando estado desde x_response: {x_response_upper}")
-            
-            if x_response_upper == "ACEPTADA":
-                # Pago aceptado - usar enum EstadoPago explícitamente
-                pago.estado = EstadoPago.completado
-                pago.response_code = "Aceptada"
-                estado_actualizado = True
-                logger.info(f"✅ Estado asignado usando enum: EstadoPago.completado = {EstadoPago.completado.value}")
-                
-                # Verificar si el monto pagado es igual o mayor al monto total de la factura
-                if factura and x_amount_ok:
-                    try:
-                        amount_paid = float(x_amount_ok)
-                        amount_invoice = float(factura.monto_pagar)
-                        
-                        # Si el pago es por el monto total (o mayor), actualizar factura a pagado
-                        if amount_paid >= amount_invoice:
-                            factura.estado = EstadoFactura.pagado
-                            factura.fecha_pago = datetime.now()
-                            logger.info(f"✅ Factura actualizada a PAGADO: factura_id={factura.id}, id_factura={factura.id_factura}, monto_pagado={amount_paid}, monto_factura={amount_invoice}")
-                        else:
-                            logger.info(f"⚠️ Pago aceptado pero monto parcial: monto_pagado={amount_paid}, monto_factura={amount_invoice}. Factura permanece pendiente.")
-                    except (ValueError, TypeError) as e:
-                        logger.warning(f"No se pudo comparar montos: x_amount_ok={x_amount_ok}, monto_pagar={factura.monto_pagar}, error={str(e)}")
-                        # Si no se puede validar el monto, asumir que es el total y aprobar
-                        factura.estado = EstadoFactura.pagado
-                        factura.fecha_pago = datetime.now()
-                        logger.info(f"✅ Factura actualizada a PAGADO (sin validación de monto): factura_id={factura.id}")
-                elif factura:
-                    # Si no viene x_amount_ok pero tenemos factura, asumir que es el total
+            raise HTTPException(status_code=400, detail="Factura no encontrada")
+
+        # Estado de la transacción
+        x_response = (webhook_data.get("x_response") or "").upper()
+        x_cod_response = webhook_data.get("x_cod_response")
+        x_amount_ok = webhook_data.get("x_amount_ok") or x_amount
+
+        def normalize_amount(value: str) -> float:
+            return float(value.replace(",", "").strip())
+
+        # Procesar estado
+        if x_response in ["ACEPTADA", "APPROVED"] or x_cod_response == "1":
+            pago.estado = EstadoPago.completado
+            pago.response_code = "Aceptada"
+
+            try:
+                amount_paid = normalize_amount(x_amount_ok)
+                amount_invoice = float(factura.monto_pagar)
+                if amount_paid >= amount_invoice:
                     factura.estado = EstadoFactura.pagado
                     factura.fecha_pago = datetime.now()
-                    logger.info(f"✅ Factura actualizada a PAGADO (sin monto en webhook): factura_id={factura.id}")
-                else:
-                    # Si no hay factura, intentar obtenerla del pago que corresponde al x_ref_payco
-                    if pago and pago.factura_id and not factura:
-                        factura = db.query(Facturacion).filter(Facturacion.id == pago.factura_id).first()
-                        if factura:
-                            logger.info(f"✅ Factura obtenida desde pago para actualizar estado: id_factura={factura.id_factura}")
-                            # Re-ejecutar la lógica de actualización de factura
-                            if x_amount_ok:
-                                try:
-                                    amount_paid = float(x_amount_ok)
-                                    amount_invoice = float(factura.monto_pagar)
-                                    if amount_paid >= amount_invoice:
-                                        factura.estado = EstadoFactura.pagado
-                                        factura.fecha_pago = datetime.now()
-                                        logger.info(f"✅ Factura actualizada a PAGADO (obtenida desde pago): factura_id={factura.id}, monto_pagado={amount_paid}, monto_factura={amount_invoice}")
-                                except (ValueError, TypeError):
-                                    factura.estado = EstadoFactura.pagado
-                                    factura.fecha_pago = datetime.now()
-                                    logger.info(f"✅ Factura actualizada a PAGADO (obtenida desde pago, sin validación monto): factura_id={factura.id}")
-                            else:
-                                factura.estado = EstadoFactura.pagado
-                                factura.fecha_pago = datetime.now()
-                                logger.info(f"✅ Factura actualizada a PAGADO (obtenida desde pago): factura_id={factura.id}")
-                        else:
-                            logger.warning(f"⚠️ Pago aprobado pero no se encontró factura asociada: ref_payco={ref_payco}, factura_id={pago.factura_id}")
-                    elif not factura:
-                        logger.warning(f"⚠️ Pago aprobado pero no se encontró factura asociada: ref_payco={ref_payco}, factura_id={pago.factura_id if pago else None}")
-                
-                logger.info(f"✅ Pago ACEPTADO: ref_payco={ref_payco}")
-                
-            elif x_response_upper == "RECHAZADA":
-                # Pago rechazado - usar enum EstadoPago explícitamente
-                pago.estado = EstadoPago.fallido
-                pago.response_code = "Rechazada"
-                estado_actualizado = True
-                logger.info(f"✅ Estado asignado usando enum: EstadoPago.fallido = {EstadoPago.fallido.value}")
-                # La factura permanece en su estado actual (no se actualiza a rechazado)
-                logger.warning(f"❌ Pago RECHAZADO: ref_payco={ref_payco}, razón={x_response_reason_text}")
-                
-            else:
-                # Otros estados (Pendiente, etc.)
-                if x_response_upper in ["PENDIENTE", "PENDING"]:
-                    # Usar enum EstadoPago explícitamente
-                    pago.estado = EstadoPago.procesando
-                    pago.response_code = "Pendiente"
-                    estado_actualizado = True
-                    logger.info(f"✅ Estado asignado usando enum: EstadoPago.procesando = {EstadoPago.procesando.value}")
-                    logger.info(f"⏳ Pago PENDIENTE: ref_payco={ref_payco}")
-                else:
-                    logger.warning(f"⚠️ Estado x_response desconocido: {x_response}, usando x_cod_response como fallback")
-        
-        # Si no se actualizó el estado desde x_response, usar x_cod_response como fallback
-        if not estado_actualizado and x_cod_response:
-            try:
-                cod_response = int(x_cod_response)
-                logger.info(f"Procesando estado desde x_cod_response: {cod_response}")
-                
-                if cod_response == 1:  # Transacción aceptada
-                    # Usar enum EstadoPago explícitamente
-                    pago.estado = EstadoPago.completado
-                    pago.response_code = "Aceptada"
-                    estado_actualizado = True
-                    logger.info(f"✅ Estado asignado usando enum (x_cod_response): EstadoPago.completado = {EstadoPago.completado.value}")
-                    
-                    # Actualizar factura si existe
-                    if factura:
-                        if x_amount_ok:
-                            try:
-                                amount_paid = float(x_amount_ok)
-                                amount_invoice = float(factura.monto_pagar)
-                                if amount_paid >= amount_invoice:
-                                    factura.estado = EstadoFactura.pagado
-                                    factura.fecha_pago = datetime.now()
-                                    logger.info(f"✅ Factura actualizada a PAGADO (desde x_cod_response): factura_id={factura.id}, monto_pagado={amount_paid}, monto_factura={amount_invoice}")
-                            except (ValueError, TypeError):
-                                factura.estado = EstadoFactura.pagado
-                                factura.fecha_pago = datetime.now()
-                                logger.info(f"✅ Factura actualizada a PAGADO (desde x_cod_response, sin validación monto): factura_id={factura.id}")
-                        else:
-                            factura.estado = EstadoFactura.pagado
-                            factura.fecha_pago = datetime.now()
-                            logger.info(f"✅ Factura actualizada a PAGADO (desde x_cod_response): factura_id={factura.id}")
-                    
-                    logger.info(f"✅ Pago ACEPTADO (desde x_cod_response): ref_payco={ref_payco}")
-                    
-                elif cod_response == 2:  # Transacción rechazada
-                    # Usar enum EstadoPago explícitamente
-                    pago.estado = EstadoPago.fallido
-                    pago.response_code = "Rechazada"
-                    estado_actualizado = True
-                    logger.info(f"✅ Estado asignado usando enum (x_cod_response): EstadoPago.fallido = {EstadoPago.fallido.value}")
-                    logger.warning(f"❌ Pago RECHAZADO (desde x_cod_response): ref_payco={ref_payco}")
-                    
-                elif cod_response == 3:  # Transacción pendiente
-                    # Usar enum EstadoPago explícitamente
-                    pago.estado = EstadoPago.procesando
-                    pago.response_code = "Pendiente"
-                    estado_actualizado = True
-                    logger.info(f"✅ Estado asignado usando enum (x_cod_response): EstadoPago.procesando = {EstadoPago.procesando.value}")
-                    logger.info(f"⏳ Pago PENDIENTE (desde x_cod_response): ref_payco={ref_payco}")
-                    
-                elif cod_response == 4:  # Transacción fallida
-                    # Usar enum EstadoPago explícitamente
-                    pago.estado = EstadoPago.fallido
-                    pago.response_code = "Fallida"
-                    estado_actualizado = True
-                    logger.info(f"✅ Estado asignado usando enum (x_cod_response): EstadoPago.fallido = {EstadoPago.fallido.value}")
-                    logger.error(f"❌ Pago FALLIDO (desde x_cod_response): ref_payco={ref_payco}")
-                    
-            except ValueError:
-                logger.warning(f"x_cod_response no es un número válido: {x_cod_response}")
-        
-        # Si aún no se actualizó, establecer response_code al menos
-        if not estado_actualizado:
-            logger.warning(f"⚠️ No se pudo determinar el estado del pago. x_response={x_response}, x_cod_response={x_cod_response}")
-            if x_response:
-                pago.response_code = x_response
-        
-        # Actualizar campos adicionales
-        if x_response_reason_text:
-            pago.response_message = x_response_reason_text
+            except Exception:
+                factura.estado = EstadoFactura.pagado
+                factura.fecha_pago = datetime.now()
+
+        elif x_response in ["RECHAZADA", "REJECTED"] or x_cod_response == "2":
+            pago.estado = EstadoPago.fallido
+            pago.response_code = "Rechazada"
+
+        elif x_response in ["PENDIENTE", "PENDING"] or x_cod_response == "3":
+            pago.estado = EstadoPago.procesando
+            pago.response_code = "Pendiente"
+
+        # IDs correctos
+        if x_transaction_id:
+            pago.transaction_id = x_transaction_id
+
+        x_approval_code = webhook_data.get("x_approval_code")
         if x_approval_code:
-            pago.transaction_id = x_approval_code
-        
-        # Actualizar monto del pago si viene en el webhook
-        if x_amount_ok:
-            try:
-                pago.monto = float(x_amount_ok)
-                pago.value = float(x_amount_ok)
-            except (ValueError, TypeError):
-                logger.warning(f"No se pudo actualizar monto: x_amount_ok={x_amount_ok}")
-        
-        # Log antes del commit para verificar cambios
-        logger.info(f"📝 Estado ANTES del commit:")
-        logger.info(f"   Pago ID={pago.id}: estado={pago.estado.value if pago.estado else 'None'}, response_code={pago.response_code}")
+            pago.approval_code = x_approval_code
+
+        # Commit
+        db.commit()
+        db.refresh(pago)
         if factura:
-            logger.info(f"   Factura ID={factura.id}: estado={factura.estado.value if factura.estado else 'None'}")
-        
-        # Asegurar que hay cambios para guardar
-        if not estado_actualizado:
-            logger.warning(f"⚠️ ADVERTENCIA: No se actualizó el estado del pago. x_response={x_response}, x_cod_response={x_cod_response}")
-        
-        # Commit de los cambios - CRÍTICO: debe ejecutarse siempre
-        try:
-            # Verificar que el pago tenga cambios
-            if pago in db.dirty:
-                logger.info(f"📝 Pago marcado como modificado en la sesión")
-            if factura and factura in db.dirty:
-                logger.info(f"📝 Factura marcada como modificada en la sesión")
-            
-            db.commit()
-            logger.info(f"✅ Commit exitoso - Pago ID={pago.id}, estado={pago.estado.value if pago.estado else 'None'}")
-            
-            # Refrescar objetos para verificar que se guardaron
-            db.refresh(pago)
-            logger.info(f"✅ Pago refrescado - ID={pago.id}, estado={pago.estado.value if pago.estado else 'None'}, ref_payco={pago.ref_payco}")
-            
-            if factura:
-                db.refresh(factura)
-                logger.info(f"✅ Factura refrescada - ID={factura.id}, estado={factura.estado.value if factura.estado else 'None'}, id_factura={factura.id_factura}")
-                
-                # Verificación final: consultar desde BD para confirmar
-                factura_verificada = db.query(Facturacion).filter(Facturacion.id == factura.id).first()
-                pago_verificado = db.query(Pagos).filter(Pagos.id == pago.id).first()
-                logger.info(f"🔍 Verificación final desde BD:")
-                logger.info(f"   Pago ID={pago_verificado.id}: estado={pago_verificado.estado.value if pago_verificado.estado else 'None'}")
-                logger.info(f"   Factura ID={factura_verificada.id}: estado={factura_verificada.estado.value if factura_verificada.estado else 'None'}")
-        except Exception as commit_error:
-            logger.error(f"❌ Error al hacer commit: {str(commit_error)}", exc_info=True)
-            db.rollback()
-            raise
-        
-        logger.info(f"✅ Pago confirmado exitosamente: ref_payco={ref_payco}, estado={pago.estado.value}, x_response={x_response}, factura_estado={factura.estado.value if factura else 'N/A'}")
-        
-        # Enviar notificación en background (si es necesario)
-        if pago and factura:
-            logger.info(f"Pago confirmado: ref_payco={ref_payco}, factura_id={factura.id}, notificación pendiente")
-        
-        return {"status": "success", "message": "Confirmación procesada", "ref_payco": ref_payco}
-        
+            db.refresh(factura)
+
+        return {
+            "status": "success",
+            "message": "Confirmación procesada",
+            "ref_payco": ref_payco
+        }
+
     except HTTPException:
         raise
-    except Exception as e:
-        logger.error(f"Error en confirmación de pago: {str(e)}", exc_info=True)
-        # Retornar 200 para que ePayco no reintente en caso de error interno
-        # (pero deberíamos loguear el error para investigar)
-        return {"status": "error", "message": f"Error al procesar confirmación: {str(e)}"}
+    except Exception:
+        db.rollback()
+        return {"status": "error", "message": "Error procesando confirmación"}
+
 
 @router.get("/transaction/{reference_payco}/detail")
 async def get_transaction_detail(
