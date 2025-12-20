@@ -228,7 +228,7 @@ async def payment_confirmation(
         
         # === VALIDACIÓN DE FIRMA (SECURITY) ===
         # Extraer campos necesarios para validar la firma
-        x_ref_payco = webhook_data.get('x_ref_payco') or webhook_data.get('ref_payco')
+        x_ref_payco = webhook_data.get('x_ref_payco')
         x_transaction_id = webhook_data.get('x_transaction_id', '')
         x_amount = webhook_data.get('x_amount', '')
         x_currency_code = webhook_data.get('x_currency_code', '')
@@ -274,8 +274,9 @@ async def payment_confirmation(
         
         logger.info(f"✅ Firma validada correctamente para x_ref_payco={x_ref_payco}")
         
-        # Usar ref_payco en adelante (normalizar nombre)
-        ref_payco = x_ref_payco
+        # Usar ref_payco en adelante - guardar EXACTAMENTE el valor de x_ref_payco sin modificaciones
+        # El ref_payco en BD debe ser exactamente igual al x_ref_payco del webhook
+        ref_payco = str(x_ref_payco).strip() if x_ref_payco else None
         
         # Extraer otros campos importantes del webhook
         x_response = webhook_data.get('x_response', '')
@@ -299,91 +300,29 @@ async def payment_confirmation(
             else:
                 logger.warning(f"⚠️ Factura no encontrada con x_id_factura: {x_id_factura}")
         
-        # === BUSCAR PAGO ===
-        # Primero intentar por ref_payco
+        # === BUSCAR PAGO POR ref_payco = x_ref_payco ===
+        # En la BD guardamos ref_payco, el webhook trae ese mismo valor como x_ref_payco
+        # Buscar el pago donde ref_payco = x_ref_payco
         pago = db.query(Pagos).filter(Pagos.ref_payco == ref_payco).first()
         
-        # Si no se encuentra por ref_payco y tenemos factura, buscar pago asociado a la factura
-        if not pago and factura:
-            logger.info(f"Buscando pago por factura_id: {factura.id}")
-            # Buscar pago pendiente o procesando para esa factura
-            pago = db.query(Pagos).filter(
-                Pagos.factura_id == factura.id,
-                Pagos.estado.in_([EstadoPago.pendiente, EstadoPago.procesando])
-            ).order_by(Pagos.fecha_pago.desc()).first()
-            
-            if pago:
-                # Validar que el ref_payco del webhook coincida con el almacenado en BD
-                if pago.ref_payco and pago.ref_payco != ref_payco:
-                    logger.error(f"❌ VALIDACIÓN FALLIDA: ref_payco del webhook ({ref_payco}) no coincide con el almacenado en BD ({pago.ref_payco})")
-                    raise HTTPException(
-                        status_code=400, 
-                        detail=f"El ref_payco del webhook ({ref_payco}) no coincide con el almacenado en la base de datos ({pago.ref_payco})"
-                    )
-                
-                # Actualizar el pago con el ref_payco del webhook si no lo tiene
-                if not pago.ref_payco:
-                    pago.ref_payco = ref_payco
-                    # No hacer commit aquí, se hará al final
-                logger.info(f"✅ Pago encontrado por factura y actualizado con ref_payco: {ref_payco}")
+        if not pago:
+            logger.warning(f"⚠️ Pago no encontrado con ref_payco: {ref_payco}")
+            return {"status": "warning", "message": f"Pago con ref_payco {ref_payco} no encontrado"}
         
-        # Si aún no tenemos factura pero tenemos pago, obtener factura del pago
-        if not factura and pago and pago.factura_id:
-            factura = db.query(Facturacion).filter(Facturacion.id == pago.factura_id).first()
-            if factura:
-                logger.info(f"✅ Factura obtenida desde pago: id_factura={factura.id_factura}")
+        logger.info(f"✅ Pago encontrado: ref_payco={ref_payco}, pago_id={pago.id}")
         
-        # === VALIDACIÓN CRÍTICA: Verificar que x_ref_payco coincida con el almacenado en BD ===
-        if pago and pago.ref_payco:
-            # Normalizar ambos valores para comparación (convertir a string y eliminar espacios)
-            ref_payco_webhook = str(ref_payco).strip()
-            ref_payco_bd = str(pago.ref_payco).strip()
-            
-            if ref_payco_webhook != ref_payco_bd:
-                logger.error(f"❌ VALIDACIÓN FALLIDA: x_ref_payco del webhook no coincide con el almacenado en BD")
-                logger.error(f"   Webhook ref_payco: '{ref_payco_webhook}' (tipo: {type(ref_payco_webhook).__name__})")
-                logger.error(f"   BD ref_payco: '{ref_payco_bd}' (tipo: {type(ref_payco_bd).__name__})")
-                logger.error(f"   Pago ID: {pago.id}, Factura ID: {pago.factura_id}")
-                raise HTTPException(
-                    status_code=400, 
-                    detail=f"El x_ref_payco del webhook ({ref_payco_webhook}) no coincide con el almacenado en la base de datos ({ref_payco_bd}). Pago ID: {pago.id}"
-                )
-            else:
-                logger.info(f"✅ Validación exitosa: x_ref_payco del webhook coincide con BD: {ref_payco_bd}")
+        # === OBTENER FACTURA DEL PAGO ===
+        # El pago SIEMPRE tiene factura_id, obtener la factura directamente
+        if not pago.factura_id:
+            logger.error(f"❌ Pago no tiene factura_id asociada: pago_id={pago.id}, ref_payco={ref_payco}")
+            raise HTTPException(status_code=400, detail=f"Pago con ref_payco {ref_payco} no tiene factura asociada")
         
-        # Si no tenemos factura ni pago, retornar warning
-        if not factura and not pago:
-            logger.warning(f"Webhook recibido sin factura ni pago encontrado: ref_payco={ref_payco}, x_id_factura={x_id_factura}")
-            return {"status": "warning", "message": f"Factura con x_id_factura {x_id_factura} o pago con ref_payco {ref_payco} no encontrado"}
+        factura = db.query(Facturacion).filter(Facturacion.id == pago.factura_id).first()
+        if not factura:
+            logger.error(f"❌ Factura no encontrada: factura_id={pago.factura_id}, pago_id={pago.id}")
+            raise HTTPException(status_code=400, detail=f"Factura asociada al pago no existe: factura_id={pago.factura_id}")
         
-        # Si tenemos factura pero no pago, crear un nuevo pago asociado
-        if factura and not pago:
-            logger.info(f"Creando nuevo pago para factura: {factura.id_factura}")
-            pago = Pagos(
-                factura_id=factura.id,
-                ref_payco=ref_payco,
-                monto=float(x_amount) if x_amount else float(factura.monto_pagar),
-                estado=EstadoPago.pendiente,
-                metodo_pago=x_franchise or "PSE",
-                currency=webhook_data.get('x_currency_code', 'COP'),
-                description=webhook_data.get('x_description', ''),
-                value=float(x_amount) if x_amount else float(factura.monto_pagar),
-                fecha_pago=datetime.now()
-            )
-            db.add(pago)
-            db.flush()
-            logger.info(f"✅ Nuevo pago creado: id={pago.id}, ref_payco={ref_payco}")
-        
-        # Asociar factura al pago si no está asociada
-        if factura and pago and not pago.factura_id:
-            pago.factura_id = factura.id
-            logger.info(f"✅ Pago asociado con factura: factura_id={factura.id}, id_factura={factura.id_factura}")
-        
-        # Validar que el invoice y monto coincidan con lo esperado (seguridad)
-        if factura and x_id_factura:
-            if factura.id_factura != x_id_factura:
-                logger.error(f"⚠️ Invoice no coincide! Esperado: {factura.id_factura}, Recibido: {x_id_factura}")
-                raise HTTPException(status_code=400, detail="Número de factura no coincide")
+        logger.info(f"✅ Factura obtenida: id_factura={factura.id_factura}, factura_id={factura.id}")
         
         # Extraer bank_url del webhook si viene (puede venir en diferentes campos)
         bank_url_webhook = webhook_data.get('urlbanco') or webhook_data.get('x_urlbanco') or webhook_data.get('bank_url') or webhook_data.get('x_bank_url')
@@ -444,7 +383,32 @@ async def payment_confirmation(
                     factura.fecha_pago = datetime.now()
                     logger.info(f"✅ Factura actualizada a PAGADO (sin monto en webhook): factura_id={factura.id}")
                 else:
-                    logger.warning(f"⚠️ Pago aprobado pero no se encontró factura asociada: ref_payco={ref_payco}, factura_id={pago.factura_id if pago else None}")
+                    # Si no hay factura, intentar obtenerla del pago que corresponde al x_ref_payco
+                    if pago and pago.factura_id and not factura:
+                        factura = db.query(Facturacion).filter(Facturacion.id == pago.factura_id).first()
+                        if factura:
+                            logger.info(f"✅ Factura obtenida desde pago para actualizar estado: id_factura={factura.id_factura}")
+                            # Re-ejecutar la lógica de actualización de factura
+                            if x_amount_ok:
+                                try:
+                                    amount_paid = float(x_amount_ok)
+                                    amount_invoice = float(factura.monto_pagar)
+                                    if amount_paid >= amount_invoice:
+                                        factura.estado = EstadoFactura.pagado
+                                        factura.fecha_pago = datetime.now()
+                                        logger.info(f"✅ Factura actualizada a PAGADO (obtenida desde pago): factura_id={factura.id}, monto_pagado={amount_paid}, monto_factura={amount_invoice}")
+                                except (ValueError, TypeError):
+                                    factura.estado = EstadoFactura.pagado
+                                    factura.fecha_pago = datetime.now()
+                                    logger.info(f"✅ Factura actualizada a PAGADO (obtenida desde pago, sin validación monto): factura_id={factura.id}")
+                            else:
+                                factura.estado = EstadoFactura.pagado
+                                factura.fecha_pago = datetime.now()
+                                logger.info(f"✅ Factura actualizada a PAGADO (obtenida desde pago): factura_id={factura.id}")
+                        else:
+                            logger.warning(f"⚠️ Pago aprobado pero no se encontró factura asociada: ref_payco={ref_payco}, factura_id={pago.factura_id}")
+                    elif not factura:
+                        logger.warning(f"⚠️ Pago aprobado pero no se encontró factura asociada: ref_payco={ref_payco}, factura_id={pago.factura_id if pago else None}")
                 
                 logger.info(f"✅ Pago ACEPTADO: ref_payco={ref_payco}")
                 
