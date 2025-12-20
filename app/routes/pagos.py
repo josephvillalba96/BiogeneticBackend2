@@ -8,7 +8,7 @@ import logging
 
 from app.database.base import get_db
 from app.models.user import User
-from app.models.facturacion import Facturacion, Pagos, EstadoPago
+from app.models.facturacion import Facturacion, Pagos, EstadoPago, EstadoFactura
 from app.routes.auth import get_current_user_from_token
 from app.schemas.pagos_schema import (
     PagoCreate,
