@@ -167,6 +167,7 @@ async def payment_response(
         """
 
 @router.post("/confirmation")
+@router.get("/confirmation")  # Soporte para GET como fallback (aunque ePayco debería usar POST)
 async def payment_confirmation(
     request: Request,
     background_tasks: BackgroundTasks,
@@ -301,15 +302,45 @@ async def payment_confirmation(
                 logger.warning(f"⚠️ Factura no encontrada con x_id_factura: {x_id_factura}")
         
         # === BUSCAR PAGO POR ref_payco = x_ref_payco ===
-        # En la BD guardamos ref_payco, el webhook trae ese mismo valor como x_ref_payco
-        # Buscar el pago donde ref_payco = x_ref_payco
-        pago = db.query(Pagos).filter(Pagos.ref_payco == ref_payco).first()
+        # En la BD tenemos la columna ref_payco
+        # El webhook trae x_ref_payco
+        # Buscar el pago donde ref_payco = x_ref_payco (búsqueda simple y directa)
+        logger.info(f"🔍 Buscando pago donde ref_payco = x_ref_payco: '{ref_payco}'")
+        
+        if not ref_payco:
+            logger.error(f"❌ x_ref_payco está vacío o es None")
+            return {"status": "error", "message": "x_ref_payco es requerido"}
+        
+        # Búsqueda directa: ref_payco = x_ref_payco
+        # Convertir x_ref_payco a string para comparación
+        ref_payco_buscar = str(ref_payco).strip() if ref_payco else None
+        
+        if not ref_payco_buscar:
+            logger.error(f"❌ x_ref_payco está vacío después de normalizar")
+            return {"status": "error", "message": "x_ref_payco es requerido"}
+        
+        # Búsqueda simple: ref_payco = x_ref_payco
+        pago = db.query(Pagos).filter(Pagos.ref_payco == ref_payco_buscar).first()
         
         if not pago:
-            logger.warning(f"⚠️ Pago no encontrado con ref_payco: {ref_payco}")
-            return {"status": "warning", "message": f"Pago con ref_payco {ref_payco} no encontrado"}
+            logger.error(f"❌ Pago NO encontrado donde ref_payco = '{ref_payco_buscar}'")
+            logger.error(f"   x_ref_payco recibido: '{ref_payco}' (tipo: {type(ref_payco).__name__})")
+            logger.error(f"   x_ref_payco normalizado: '{ref_payco_buscar}'")
+            
+            # Buscar pagos recientes para debugging
+            pagos_recientes = db.query(Pagos).filter(
+                Pagos.ref_payco.isnot(None)
+            ).order_by(Pagos.id.desc()).limit(20).all()
+            
+            logger.error(f"   Últimos 20 pagos con ref_payco en BD:")
+            for p in pagos_recientes:
+                ref_payco_bd = str(p.ref_payco).strip() if p.ref_payco else None
+                es_igual = ref_payco_bd == ref_payco_buscar
+                logger.error(f"     - Pago ID={p.id}, ref_payco='{ref_payco_bd}', igual? {es_igual}")
+            
+            return {"status": "warning", "message": f"Pago con ref_payco {ref_payco_buscar} no encontrado"}
         
-        logger.info(f"✅ Pago encontrado: ref_payco={ref_payco}, pago_id={pago.id}")
+        logger.info(f"✅ Pago encontrado: pago_id={pago.id}, ref_payco='{pago.ref_payco}'")
         
         # === OBTENER FACTURA DEL PAGO ===
         # El pago SIEMPRE tiene factura_id, obtener la factura directamente
@@ -515,7 +546,9 @@ async def payment_confirmation(
                 logger.warning(f"No se pudo actualizar monto: x_amount_ok={x_amount_ok}")
         
         # Log antes del commit para verificar cambios
-        logger.info(f"📝 Estado ANTES del commit - Pago: estado={pago.estado.value}, response_code={pago.response_code}, factura: estado={factura.estado.value if factura else 'N/A'}")
+        logger.info(f"📝 Estado ANTES del commit - Pago ID={pago.id}: estado={pago.estado.value}, response_code={pago.response_code}")
+        if factura:
+            logger.info(f"📝 Estado ANTES del commit - Factura ID={factura.id}: estado={factura.estado.value}")
         
         # Commit de los cambios
         try:
@@ -524,9 +557,11 @@ async def payment_confirmation(
             
             # Refrescar objetos para verificar que se guardaron
             db.refresh(pago)
+            logger.info(f"✅ Pago refrescado - ID={pago.id}, estado={pago.estado.value}, ref_payco={pago.ref_payco}")
+            
             if factura:
                 db.refresh(factura)
-                logger.info(f"✅ Factura refrescada - ID={factura.id}, estado={factura.estado.value}")
+                logger.info(f"✅ Factura refrescada - ID={factura.id}, estado={factura.estado.value}, id_factura={factura.id_factura}")
         except Exception as commit_error:
             logger.error(f"❌ Error al hacer commit: {str(commit_error)}", exc_info=True)
             db.rollback()
