@@ -167,7 +167,6 @@ async def payment_response(
         """
 
 @router.post("/confirmation")
-@router.get("/confirmation")  # Soporte para GET como fallback (aunque ePayco debería usar POST)
 async def payment_confirmation(
     request: Request,
     background_tasks: BackgroundTasks,
