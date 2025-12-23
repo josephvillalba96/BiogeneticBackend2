@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 def get_bull_performance(
     db: Session,
     client_id: Optional[int] = None,
+    raza_id: Optional[int] = None,
     query: Optional[str] = None,
     skip: int = 0,
     limit: int = 100
@@ -21,6 +22,7 @@ def get_bull_performance(
     
     Parámetros:
     - client_id: ID del cliente para filtrar toros
+    - raza_id: ID de la raza para filtrar toros
     - query: Búsqueda general por lote, nombre del toro o número de registro
     - skip: Número de registros a omitir (paginación)
     - limit: Número máximo de registros a devolver (paginación)
@@ -54,13 +56,28 @@ def get_bull_performance(
         where_conditions.append("t.user_id = :client_id")
         params["client_id"] = client_id
     
+    if raza_id is not None:
+        where_conditions.append("t.race_id = :raza_id")
+        params["raza_id"] = raza_id
+    
     if query is not None:
         # Búsqueda general en lote, nombre del toro o número de registro
-        where_conditions.append("""
-            (t.lote LIKE :query OR 
-             t.name LIKE :query OR 
-             t.registration_number LIKE :query)
-        """)
+        # Si el query es numérico, también buscar por ID de raza
+        query_conditions = [
+            "t.lote LIKE :query",
+            "t.name LIKE :query",
+            "t.registration_number LIKE :query"
+        ]
+        
+        # Si el query es numérico, también buscar por ID de raza
+        try:
+            raza_id_from_query = int(query)
+            query_conditions.append("t.race_id = :raza_id_query")
+            params["raza_id_query"] = raza_id_from_query
+        except ValueError:
+            pass  # No es numérico, no buscar por ID
+        
+        where_conditions.append(f"({' OR '.join(query_conditions)})")
         params["query"] = f"%{query}%"
     
     # Agregar condiciones WHERE si existen
@@ -105,6 +122,7 @@ def get_bull_performance(
 def get_bull_performance_summary(
     db: Session,
     client_id: Optional[int] = None,
+    raza_id: Optional[int] = None,
     query: Optional[str] = None
 ) -> Dict[str, Any]:
     """
@@ -112,6 +130,7 @@ def get_bull_performance_summary(
     
     Parámetros:
     - client_id: ID del cliente para filtrar toros
+    - raza_id: ID de la raza para filtrar toros
     - query: Búsqueda general por lote, nombre del toro o número de registro
     
     Retorna estadísticas generales como total de toros, promedio de producción, etc.
@@ -140,13 +159,28 @@ def get_bull_performance_summary(
         where_conditions.append("t.user_id = :client_id")
         params["client_id"] = client_id
     
+    if raza_id is not None:
+        where_conditions.append("t.race_id = :raza_id")
+        params["raza_id"] = raza_id
+    
     if query is not None:
         # Búsqueda general en lote, nombre del toro o número de registro
-        where_conditions.append("""
-            (t.lote LIKE :query OR 
-             t.name LIKE :query OR 
-             t.registration_number LIKE :query)
-        """)
+        # Si el query es numérico, también buscar por ID de raza
+        query_conditions = [
+            "t.lote LIKE :query",
+            "t.name LIKE :query",
+            "t.registration_number LIKE :query"
+        ]
+        
+        # Si el query es numérico, también buscar por ID de raza
+        try:
+            raza_id_from_query = int(query)
+            query_conditions.append("t.race_id = :raza_id_query")
+            params["raza_id_query"] = raza_id_from_query
+        except ValueError:
+            pass  # No es numérico, no buscar por ID
+        
+        where_conditions.append(f"({' OR '.join(query_conditions)})")
         params["query"] = f"%{query}%"
     
     # Agregar condiciones WHERE si existen
