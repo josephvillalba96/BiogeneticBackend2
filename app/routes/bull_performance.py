@@ -15,10 +15,11 @@ router = APIRouter(prefix="/bull-performance", tags=["Bull Performance"])
 
 @router.get("/", response_model=BullPerformanceResponse)
 async def get_bull_performance_data(
-    client_id: Optional[int] = Query(None, description="ID del cliente para filtrar toros"),
-    query: Optional[str] = Query(None, description="Búsqueda general por lote, nombre del toro o número de registro"),
-    page: int = Query(1, ge=1, description="Número de página"),
-    page_size: int = Query(100, ge=1, le=1000, description="Tamaño de página"),
+    client_id: Optional[int] = Query(default=None, description="ID del cliente para filtrar toros"),
+    raza_id: Optional[int] = Query(default=None, description="ID de la raza para filtrar toros"),
+    query: Optional[str] = Query(default=None, description="Búsqueda general por lote, nombre del toro, número de registro o ID de raza"),
+    page: int = Query(default=1, ge=1, description="Número de página"),
+    page_size: int = Query(default=100, ge=1, le=1000, description="Tamaño de página"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user_from_token)
 ):
@@ -27,7 +28,8 @@ async def get_bull_performance_data(
     
     Filtros disponibles:
     - client_id: Filtrar por ID de cliente
-    - query: Búsqueda general por lote, nombre del toro o número de registro (búsqueda parcial)
+    - raza_id: Filtrar por ID de raza de toro
+    - query: Búsqueda general por lote, nombre del toro, número de registro o ID de raza (búsqueda parcial)
     
     Si el usuario no es administrador, solo podrá ver sus propios toros.
     """
@@ -44,6 +46,7 @@ async def get_bull_performance_data(
         performance_data = get_bull_performance(
             db=db,
             client_id=client_id,
+            raza_id=raza_id,
             query=query,
             skip=skip,
             limit=page_size
@@ -53,6 +56,7 @@ async def get_bull_performance_data(
         summary_data = get_bull_performance_summary(
             db=db,
             client_id=client_id,
+            raza_id=raza_id,
             query=query
         )
         
@@ -85,8 +89,9 @@ async def get_bull_performance_data(
 
 @router.get("/summary", response_model=BullPerformanceSummary)
 async def get_bull_performance_summary_only(
-    client_id: Optional[int] = Query(None, description="ID del cliente para filtrar toros"),
-    query: Optional[str] = Query(None, description="Búsqueda general por lote, nombre del toro o número de registro"),
+    client_id: Optional[int] = Query(default=None, description="ID del cliente para filtrar toros"),
+    raza_id: Optional[int] = Query(default=None, description="ID de la raza para filtrar toros"),
+    query: Optional[str] = Query(default=None, description="Búsqueda general por lote, nombre del toro, número de registro o ID de raza"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user_from_token)
 ):
@@ -94,6 +99,11 @@ async def get_bull_performance_summary_only(
     Obtiene solo el resumen estadístico del rendimiento de toros.
     
     Útil para obtener estadísticas generales sin los datos detallados.
+    
+    Filtros disponibles:
+    - client_id: Filtrar por ID de cliente
+    - raza_id: Filtrar por ID de raza de toro
+    - query: Búsqueda general por lote, nombre del toro, número de registro, nombre de raza o ID de raza
     """
     
     try:
@@ -105,6 +115,7 @@ async def get_bull_performance_summary_only(
         summary_data = get_bull_performance_summary(
             db=db,
             client_id=client_id,
+            raza_id=raza_id,
             query=query
         )
         
