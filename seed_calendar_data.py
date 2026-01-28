@@ -18,10 +18,10 @@ def create_tables():
 
 def seed_calendar_task_types(db: Session):
     """Poblar los tipos de tareas del calendario"""
-    task_types = [
+task_types = [
         {
-            "name": "Opus",
-            "type_code": "opus",
+            "name": "OPU",
+            "type_code": "opu",
             "day_offset": 0,
             "color_background": "#e3f2fd",
             "color_foreground": "#0d47a1",
@@ -44,19 +44,27 @@ def seed_calendar_task_types(db: Session):
             "description": "Cultivo In Vitro"
         },
         {
-            "name": "D3",
-            "type_code": "d3",
+            "name": "Clivage",
+            "type_code": "clivage",
             "day_offset": 3,
             "color_background": "#fff3e0",
             "color_foreground": "#e65100",
-            "description": "Evaluación de embriones día 3"
+            "description": "Evaluación de clivaje"
+        },
+        {
+            "name": "D4",
+            "type_code": "d4",
+            "day_offset": 4,
+            "color_background": "#fce4ec",
+            "color_foreground": "#880e4f",
+            "description": "Evaluación de embriones día 4"
         },
         {
             "name": "D5",
             "type_code": "d5",
             "day_offset": 5,
-            "color_background": "#fce4ec",
-            "color_foreground": "#880e4f",
+            "color_background": "#f1f8e9",
+            "color_foreground": "#33691e",
             "description": "Evaluación de embriones día 5"
         },
         {
@@ -68,12 +76,12 @@ def seed_calendar_task_types(db: Session):
             "description": "Previsión de resultados"
         },
         {
-            "name": "Informe",
-            "type_code": "informe",
+            "name": "TE",
+            "type_code": "TE",
             "day_offset": 7,
             "color_background": "#e0f2f1",
             "color_foreground": "#004d40",
-            "description": "Informe final del proceso"
+            "description": "Transferencia Embrionaria"
         }
     ]
     
@@ -143,15 +151,16 @@ def seed_calendar_template_tasks(db: Session):
     task_types = db.query(CalendarTaskType).all()
     task_types_dict = {tt.type_code: tt.id for tt in task_types}
     
-    # Definir las tareas para el template estándar
+# Definir las tareas para el template estándar
     template_tasks = [
-        {"type_code": "opus", "day_offset": 0, "order_index": 1},
+        {"type_code": "opu", "day_offset": 0, "order_index": 1},
         {"type_code": "fiv", "day_offset": 1, "order_index": 2},
         {"type_code": "civ", "day_offset": 2, "order_index": 3},
-        {"type_code": "d3", "day_offset": 3, "order_index": 4},
-        {"type_code": "d5", "day_offset": 5, "order_index": 5},
-        {"type_code": "prevision", "day_offset": 6, "order_index": 6},
-        {"type_code": "informe", "day_offset": 7, "order_index": 7}
+        {"type_code": "clivage", "day_offset": 3, "order_index": 4},
+        {"type_code": "d4", "day_offset": 4, "order_index": 5},
+        {"type_code": "d5", "day_offset": 5, "order_index": 6},
+        {"type_code": "prevision", "day_offset": 6, "order_index": 7},
+        {"type_code": "TE", "day_offset": 7, "order_index": 8}
     ]
     
     # Verificar si ya existen tareas para este template

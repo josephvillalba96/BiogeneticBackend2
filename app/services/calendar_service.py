@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session, selectinload
 from app.models.calendar import CalendarTask, CalendarTaskType, CalendarTemplate, CalendarTemplateTask
 from app.models.user import User
 from app.schemas.calendar_schema import (
@@ -17,6 +18,68 @@ from datetime import date, datetime, time, timedelta
 
 # Configurar logger
 logger = logging.getLogger(__name__)
+
+def fix_task_names_and_types(tasks: List[CalendarTask], db: Session) -> List[CalendarTask]:
+    """
+    Corrige los nombres y tipos de tareas incorrectos usando CalendarTaskType.
+    Esta función mapea los task_type codes incorrectos a los correctos
+    y actualiza los task_name con los nombres apropiados.
+    """
+    # Mapeo para corregir task_type codes incorrectos a los códigos correctos de la BD
+    task_type_mapping = {
+        'opus': 'opu',      # Convertir opus a opu
+        'd0': 'fiv',        # Día 0 = fiv
+        'd1': 'civ',        # Día 1 = civ
+        'd2': 'clivage',    # Día 2 = clivage
+        'd3': 'clivage',    # Día 3 = clivage
+        'd4': 'd4',         # Día 4 = d4
+        'd5': 'd5',         # Día 5 = d5
+        'd6': 'prevision',  # Día 6 = prevision
+        'd7': 'TE',         # Día 7 = TE
+        'informe': 'TE'     # Convertir informe a TE
+    }
+    
+    # Obtener todos los tipos de tareas una sola vez para mejor rendimiento
+    task_types = db.query(CalendarTaskType).filter(CalendarTaskType.is_active == True).all()
+    task_type_dict = {tt.type_code: tt for tt in task_types}
+    
+    # Corregir los nombres de tareas usando CalendarTaskType
+    for task in tasks:
+        # Primero corregir el task_type si está en el mapeo
+        original_task_type = task.task_type
+        
+        if original_task_type in task_type_mapping:
+            corrected_task_type_code = task_type_mapping[original_task_type]
+        else:
+            corrected_task_type_code = original_task_type
+            
+        # Buscar el tipo de tarea correspondiente en el diccionario
+        task_type_obj = task_type_dict.get(corrected_task_type_code)
+        
+        if task_type_obj:
+            # Usar el nombre correcto desde CalendarTaskType
+            task.task_name = task_type_obj.name
+            # También corregir el task_type al código correcto
+            task.task_type = corrected_task_type_code
+        else:
+            # Si no se encuentra el tipo, al menos corregir los códigos obvios
+            if original_task_type in task_type_mapping:
+                task.task_type = task_type_mapping[original_task_type]
+                # Intentar usar un nombre descriptivo como fallback
+                fallback_names = {
+                    'opu': 'OPU',
+                    'fiv': 'FIV', 
+                    'civ': 'CIV',
+                    'clivage': 'Clivage',
+                    'd4': 'Día 4',
+                    'd5': 'Día 5',
+                    'prevision': 'Previsión',
+                    'TE': 'TE'
+                }
+                if corrected_task_type_code in fallback_names:
+                    task.task_name = fallback_names[corrected_task_type_code]
+    
+    return tasks
 
 # ============================================================================
 # SERVICIOS PARA CALENDAR TASK TYPE
@@ -507,9 +570,9 @@ def get_calendar_tasks_by_month(
     first_day = date(year, month, 1)
     last_day = date(year, month, monthrange(year, month)[1])
     
-    # Obtener todas las tareas que se solapen con el rango del mes
+# Obtener todas las tareas que se solapen con el rango del mes
     # Una tarea se solapa si: start_date <= last_day AND end_date >= first_day
-    return (
+    tasks = (
         db.query(CalendarTask)
         .options(
             selectinload(CalendarTask.client),
@@ -524,6 +587,9 @@ def get_calendar_tasks_by_month(
         .order_by(CalendarTask.start_date, CalendarTask.start_time)
         .all()
     )
+    
+    # Corregir los nombres y tipos de tareas
+    return fix_task_names_and_types(tasks, db)
 
 def toggle_task_status(
     db: Session,

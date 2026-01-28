@@ -51,10 +51,12 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
             detail="Error al asignar rol de Cliente"
         )
     
-    # Limpiar cualquier otro rol que pudiera tener (por si acaso)
+# Limpiar cualquier otro rol que pudiera tener (por si acaso)
     db_user.roles = []
     # Asignar solo el rol de Cliente
     db_user.roles.append(client_role)
+    # Asegurar que no sea administrador
+    db_user.is_admin = False
     db.commit()
     db.refresh(db_user)
     

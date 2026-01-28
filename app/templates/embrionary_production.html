@@ -425,7 +425,7 @@
         </div>
         {% endif %}
         
-        <!-- Resumen de toros -->
+<!-- Resumen de toros agrupados -->
         {% if resumen_toros and resumen_toros|length > 0 %}
         <div class="section-title">RESUMEN DE SALIDAS DE SEMEN</div>
         <table class="summary-table">
@@ -433,10 +433,9 @@
                 <tr>
                     <th>Toro</th>
                     <th>Raza</th>
-                    <th>Registro</th>
                     <th>Cantidad trabajada</th>
-                    <th>#N° Donantes</th>
-                    <th>Cultivados</th>
+                    <th>Total Donadoras</th>
+                    <th>Total Cultivados</th>
                     <th>Producción total</th>
                     <th>%</th>
                 </tr>
@@ -446,7 +445,6 @@
                 <tr>
                     <td class="text-center">{{ toro.toro_nombre }}</td>
                     <td class="text-center">{{ toro.race }}</td>
-                    <td class="text-center">{{ toro.numero_registro }}</td>
                     <td class="text-center">{{ "%.2f"|format(toro.cantidad_semen_trabajada|float) }}</td>
                     <td class="text-center">{{ toro.total_donadoras }}</td>
                     <td class="text-center">{{ "%.2f"|format(toro.cantidad_total_ctv|float) }}</td>
@@ -454,6 +452,16 @@
                     <td class="text-center">{{ "%.2f"|format(toro.porcentaje|float) }}%</td>
                 </tr>
                 {% endfor %}
+                <!-- Fila de totales del resumen -->
+                <tr class="totals-row">
+                    <td class="text-center">Totales</td>
+                    <td class="text-center">-</td>
+                    <td class="text-center">{{ "%.2f"|format(resumen_toros|sum(attribute='cantidad_semen_trabajada')|float) }}</td>
+                    <td class="text-center">{{ resumen_toros|sum(attribute='total_donadoras') }}</td>
+                    <td class="text-center">{{ "%.2f"|format(resumen_toros|sum(attribute='cantidad_total_ctv')|float) }}</td>
+                    <td class="text-center">{{ resumen_toros|sum(attribute='produccion_total') }}</td>
+                    <td class="text-center">{{ "%.2f"|format((resumen_toros|sum(attribute='produccion_total') * 100 / (resumen_toros|sum(attribute='cantidad_total_ctv') if resumen_toros|sum(attribute='cantidad_total_ctv') > 0 else 1))|float) }}%</td>
+                </tr>
             </tbody>
         </table>
         {% endif %}

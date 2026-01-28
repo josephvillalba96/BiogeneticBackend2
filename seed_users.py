@@ -41,10 +41,11 @@ def seed_admin_user():
         if not existing_user:
             # Crear el usuario
             admin_user = User(**admin_data)
-            # Asignar rol de administrador
+# Asignar rol de administrador
             admin_role = get_role_by_name(db, "Admin")
             if admin_role:
                 admin_user.roles.append(admin_role)
+                admin_user.is_admin = True  # Establecer is_admin en True
             db.add(admin_user)
             db.commit()
             logger.info(f"Creado usuario administrador: {admin_data['email']}")

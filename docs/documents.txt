@@ -1,0 +1,1703 @@
+[
+    {
+        "id": 194,
+        "created_at": "2026-01-14T15:42:32",
+        "updated_at": "2026-01-14T15:47:15",
+        "client_id": 5,
+        "client_name": "JAUMER ANDRES OROZCO ",
+        "task_name": "OPUS",
+        "task_type": "opus",
+        "summary": "OPUS",
+        "description": "OPUS para JAUMER ANDRES OROZCO ",
+        "start_date": "2026-01-14",
+        "start_time": "09:00:00",
+        "end_date": "2026-01-14",
+        "end_time": "17:00:00",
+        "veterinarian": "EL VERGEL ",
+        "location": "HUILA",
+        "status": "completed",
+        "suffix": "jaumer_andres_orozco__task_1",
+        "task_group_id": null,
+        "color_background": "#e3f2fd",
+        "color_foreground": "#0d47a1",
+        "created_by": 1,
+        "client": {
+            "id": 5,
+            "created_at": "2025-07-04T13:38:31",
+            "updated_at": "2025-10-17T13:21:46",
+            "number_document": "1032443326",
+            "specialty": "Client",
+            "email": "jorozco06@unisalle.edu.co",
+            "phone": "3123618938",
+            "full_name": "JAUMER ANDRES OROZCO ",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/5/0717b236-e685-442f-9ce9-953bac63249e.enc",
+            "roles": [
+                {
+                    "id": 3,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Client"
+                }
+            ]
+        },
+        "creator": {
+            "id": 1,
+            "created_at": "2025-07-03T11:18:18",
+            "updated_at": "2025-10-17T18:11:04",
+            "number_document": "1234567890",
+            "specialty": "Admin",
+            "email": "admin@biogenetic.com",
+            "phone": "1234567890",
+            "full_name": "BIOGENETIC ADMIN",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/1/d9c2a59a-cc8a-4166-920f-f210024aa616.png",
+            "roles": [
+                {
+                    "id": 1,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Admin"
+                }
+            ]
+        }
+    },
+    {
+        "id": 192,
+        "created_at": "2026-01-14T15:42:32",
+        "updated_at": "2026-01-14T15:42:32",
+        "client_id": 5,
+        "client_name": "JAUMER ANDRES OROZCO ",
+        "task_name": "Día 0",
+        "task_type": "d0",
+        "summary": "Día 0",
+        "description": "Día 0 para JAUMER ANDRES OROZCO ",
+        "start_date": "2026-01-15",
+        "start_time": "09:00:00",
+        "end_date": "2026-01-15",
+        "end_time": "17:00:00",
+        "veterinarian": "EL VERGEL ",
+        "location": "HUILA",
+        "status": "pending",
+        "suffix": "jaumer_andres_orozco__task_1",
+        "task_group_id": null,
+        "color_background": "#e3f2fd",
+        "color_foreground": "#0d47a1",
+        "created_by": 1,
+        "client": {
+            "id": 5,
+            "created_at": "2025-07-04T13:38:31",
+            "updated_at": "2025-10-17T13:21:46",
+            "number_document": "1032443326",
+            "specialty": "Client",
+            "email": "jorozco06@unisalle.edu.co",
+            "phone": "3123618938",
+            "full_name": "JAUMER ANDRES OROZCO ",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/5/0717b236-e685-442f-9ce9-953bac63249e.enc",
+            "roles": [
+                {
+                    "id": 3,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Client"
+                }
+            ]
+        },
+        "creator": {
+            "id": 1,
+            "created_at": "2025-07-03T11:18:18",
+            "updated_at": "2025-10-17T18:11:04",
+            "number_document": "1234567890",
+            "specialty": "Admin",
+            "email": "admin@biogenetic.com",
+            "phone": "1234567890",
+            "full_name": "BIOGENETIC ADMIN",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/1/d9c2a59a-cc8a-4166-920f-f210024aa616.png",
+            "roles": [
+                {
+                    "id": 1,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Admin"
+                }
+            ]
+        }
+    },
+    {
+        "id": 195,
+        "created_at": "2026-01-14T15:42:32",
+        "updated_at": "2026-01-14T15:42:32",
+        "client_id": 5,
+        "client_name": "JAUMER ANDRES OROZCO ",
+        "task_name": "Día 1",
+        "task_type": "d1",
+        "summary": "Día 1",
+        "description": "Día 1 para JAUMER ANDRES OROZCO ",
+        "start_date": "2026-01-16",
+        "start_time": "09:00:00",
+        "end_date": "2026-01-16",
+        "end_time": "17:00:00",
+        "veterinarian": "EL VERGEL ",
+        "location": "HUILA",
+        "status": "pending",
+        "suffix": "jaumer_andres_orozco__task_1",
+        "task_group_id": null,
+        "color_background": "#e3f2fd",
+        "color_foreground": "#0d47a1",
+        "created_by": 1,
+        "client": {
+            "id": 5,
+            "created_at": "2025-07-04T13:38:31",
+            "updated_at": "2025-10-17T13:21:46",
+            "number_document": "1032443326",
+            "specialty": "Client",
+            "email": "jorozco06@unisalle.edu.co",
+            "phone": "3123618938",
+            "full_name": "JAUMER ANDRES OROZCO ",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/5/0717b236-e685-442f-9ce9-953bac63249e.enc",
+            "roles": [
+                {
+                    "id": 3,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Client"
+                }
+            ]
+        },
+        "creator": {
+            "id": 1,
+            "created_at": "2025-07-03T11:18:18",
+            "updated_at": "2025-10-17T18:11:04",
+            "number_document": "1234567890",
+            "specialty": "Admin",
+            "email": "admin@biogenetic.com",
+            "phone": "1234567890",
+            "full_name": "BIOGENETIC ADMIN",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/1/d9c2a59a-cc8a-4166-920f-f210024aa616.png",
+            "roles": [
+                {
+                    "id": 1,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Admin"
+                }
+            ]
+        }
+    },
+    {
+        "id": 213,
+        "created_at": "2026-01-14T15:44:21",
+        "updated_at": "2026-01-14T15:44:21",
+        "client_id": 5,
+        "client_name": "JAUMER ANDRES OROZCO ",
+        "task_name": "OPUS",
+        "task_type": "opus",
+        "summary": "OPUS",
+        "description": "OPUS para JAUMER ANDRES OROZCO ",
+        "start_date": "2026-01-16",
+        "start_time": "09:00:00",
+        "end_date": "2026-01-16",
+        "end_time": "17:00:00",
+        "veterinarian": "JAUMER",
+        "location": "FACA",
+        "status": "pending",
+        "suffix": "jaumer_andres_orozco__task_19",
+        "task_group_id": null,
+        "color_background": "#e3f2fd",
+        "color_foreground": "#0d47a1",
+        "created_by": 1,
+        "client": {
+            "id": 5,
+            "created_at": "2025-07-04T13:38:31",
+            "updated_at": "2025-10-17T13:21:46",
+            "number_document": "1032443326",
+            "specialty": "Client",
+            "email": "jorozco06@unisalle.edu.co",
+            "phone": "3123618938",
+            "full_name": "JAUMER ANDRES OROZCO ",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/5/0717b236-e685-442f-9ce9-953bac63249e.enc",
+            "roles": [
+                {
+                    "id": 3,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Client"
+                }
+            ]
+        },
+        "creator": {
+            "id": 1,
+            "created_at": "2025-07-03T11:18:18",
+            "updated_at": "2025-10-17T18:11:04",
+            "number_document": "1234567890",
+            "specialty": "Admin",
+            "email": "admin@biogenetic.com",
+            "phone": "1234567890",
+            "full_name": "BIOGENETIC ADMIN",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/1/d9c2a59a-cc8a-4166-920f-f210024aa616.png",
+            "roles": [
+                {
+                    "id": 1,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Admin"
+                }
+            ]
+        }
+    },
+    {
+        "id": 200,
+        "created_at": "2026-01-14T15:43:58",
+        "updated_at": "2026-01-14T15:43:58",
+        "client_id": 5,
+        "client_name": "JAUMER ANDRES OROZCO ",
+        "task_name": "OPUS",
+        "task_type": "opus",
+        "summary": "OPUS",
+        "description": "OPUS para JAUMER ANDRES OROZCO ",
+        "start_date": "2026-01-16",
+        "start_time": "09:00:00",
+        "end_date": "2026-01-16",
+        "end_time": "17:00:00",
+        "veterinarian": "JAUMER",
+        "location": "YAGUARA",
+        "status": "pending",
+        "suffix": "jaumer_andres_orozco__task_10",
+        "task_group_id": null,
+        "color_background": "#e3f2fd",
+        "color_foreground": "#0d47a1",
+        "created_by": 1,
+        "client": {
+            "id": 5,
+            "created_at": "2025-07-04T13:38:31",
+            "updated_at": "2025-10-17T13:21:46",
+            "number_document": "1032443326",
+            "specialty": "Client",
+            "email": "jorozco06@unisalle.edu.co",
+            "phone": "3123618938",
+            "full_name": "JAUMER ANDRES OROZCO ",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/5/0717b236-e685-442f-9ce9-953bac63249e.enc",
+            "roles": [
+                {
+                    "id": 3,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Client"
+                }
+            ]
+        },
+        "creator": {
+            "id": 1,
+            "created_at": "2025-07-03T11:18:18",
+            "updated_at": "2025-10-17T18:11:04",
+            "number_document": "1234567890",
+            "specialty": "Admin",
+            "email": "admin@biogenetic.com",
+            "phone": "1234567890",
+            "full_name": "BIOGENETIC ADMIN",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/1/d9c2a59a-cc8a-4166-920f-f210024aa616.png",
+            "roles": [
+                {
+                    "id": 1,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Admin"
+                }
+            ]
+        }
+    },
+    {
+        "id": 193,
+        "created_at": "2026-01-14T15:42:32",
+        "updated_at": "2026-01-14T15:42:32",
+        "client_id": 5,
+        "client_name": "JAUMER ANDRES OROZCO ",
+        "task_name": "Día 2",
+        "task_type": "d2",
+        "summary": "Día 2",
+        "description": "Día 2 para JAUMER ANDRES OROZCO ",
+        "start_date": "2026-01-17",
+        "start_time": "09:00:00",
+        "end_date": "2026-01-17",
+        "end_time": "17:00:00",
+        "veterinarian": "EL VERGEL ",
+        "location": "HUILA",
+        "status": "pending",
+        "suffix": "jaumer_andres_orozco__task_1",
+        "task_group_id": null,
+        "color_background": "#e3f2fd",
+        "color_foreground": "#0d47a1",
+        "created_by": 1,
+        "client": {
+            "id": 5,
+            "created_at": "2025-07-04T13:38:31",
+            "updated_at": "2025-10-17T13:21:46",
+            "number_document": "1032443326",
+            "specialty": "Client",
+            "email": "jorozco06@unisalle.edu.co",
+            "phone": "3123618938",
+            "full_name": "JAUMER ANDRES OROZCO ",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/5/0717b236-e685-442f-9ce9-953bac63249e.enc",
+            "roles": [
+                {
+                    "id": 3,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Client"
+                }
+            ]
+        },
+        "creator": {
+            "id": 1,
+            "created_at": "2025-07-03T11:18:18",
+            "updated_at": "2025-10-17T18:11:04",
+            "number_document": "1234567890",
+            "specialty": "Admin",
+            "email": "admin@biogenetic.com",
+            "phone": "1234567890",
+            "full_name": "BIOGENETIC ADMIN",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/1/d9c2a59a-cc8a-4166-920f-f210024aa616.png",
+            "roles": [
+                {
+                    "id": 1,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Admin"
+                }
+            ]
+        }
+    },
+    {
+        "id": 201,
+        "created_at": "2026-01-14T15:43:58",
+        "updated_at": "2026-01-14T15:43:58",
+        "client_id": 5,
+        "client_name": "JAUMER ANDRES OROZCO ",
+        "task_name": "Día 0",
+        "task_type": "d0",
+        "summary": "Día 0",
+        "description": "Día 0 para JAUMER ANDRES OROZCO ",
+        "start_date": "2026-01-17",
+        "start_time": "09:00:00",
+        "end_date": "2026-01-17",
+        "end_time": "17:00:00",
+        "veterinarian": "JAUMER",
+        "location": "YAGUARA",
+        "status": "pending",
+        "suffix": "jaumer_andres_orozco__task_10",
+        "task_group_id": null,
+        "color_background": "#e3f2fd",
+        "color_foreground": "#0d47a1",
+        "created_by": 1,
+        "client": {
+            "id": 5,
+            "created_at": "2025-07-04T13:38:31",
+            "updated_at": "2025-10-17T13:21:46",
+            "number_document": "1032443326",
+            "specialty": "Client",
+            "email": "jorozco06@unisalle.edu.co",
+            "phone": "3123618938",
+            "full_name": "JAUMER ANDRES OROZCO ",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/5/0717b236-e685-442f-9ce9-953bac63249e.enc",
+            "roles": [
+                {
+                    "id": 3,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Client"
+                }
+            ]
+        },
+        "creator": {
+            "id": 1,
+            "created_at": "2025-07-03T11:18:18",
+            "updated_at": "2025-10-17T18:11:04",
+            "number_document": "1234567890",
+            "specialty": "Admin",
+            "email": "admin@biogenetic.com",
+            "phone": "1234567890",
+            "full_name": "BIOGENETIC ADMIN",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/1/d9c2a59a-cc8a-4166-920f-f210024aa616.png",
+            "roles": [
+                {
+                    "id": 1,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Admin"
+                }
+            ]
+        }
+    },
+    {
+        "id": 209,
+        "created_at": "2026-01-14T15:44:21",
+        "updated_at": "2026-01-14T15:44:21",
+        "client_id": 5,
+        "client_name": "JAUMER ANDRES OROZCO ",
+        "task_name": "Día 0",
+        "task_type": "d0",
+        "summary": "Día 0",
+        "description": "Día 0 para JAUMER ANDRES OROZCO ",
+        "start_date": "2026-01-17",
+        "start_time": "09:00:00",
+        "end_date": "2026-01-17",
+        "end_time": "17:00:00",
+        "veterinarian": "JAUMER",
+        "location": "FACA",
+        "status": "pending",
+        "suffix": "jaumer_andres_orozco__task_19",
+        "task_group_id": null,
+        "color_background": "#e3f2fd",
+        "color_foreground": "#0d47a1",
+        "created_by": 1,
+        "client": {
+            "id": 5,
+            "created_at": "2025-07-04T13:38:31",
+            "updated_at": "2025-10-17T13:21:46",
+            "number_document": "1032443326",
+            "specialty": "Client",
+            "email": "jorozco06@unisalle.edu.co",
+            "phone": "3123618938",
+            "full_name": "JAUMER ANDRES OROZCO ",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/5/0717b236-e685-442f-9ce9-953bac63249e.enc",
+            "roles": [
+                {
+                    "id": 3,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Client"
+                }
+            ]
+        },
+        "creator": {
+            "id": 1,
+            "created_at": "2025-07-03T11:18:18",
+            "updated_at": "2025-10-17T18:11:04",
+            "number_document": "1234567890",
+            "specialty": "Admin",
+            "email": "admin@biogenetic.com",
+            "phone": "1234567890",
+            "full_name": "BIOGENETIC ADMIN",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/1/d9c2a59a-cc8a-4166-920f-f210024aa616.png",
+            "roles": [
+                {
+                    "id": 1,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Admin"
+                }
+            ]
+        }
+    },
+    {
+        "id": 198,
+        "created_at": "2026-01-14T15:42:32",
+        "updated_at": "2026-01-14T15:42:32",
+        "client_id": 5,
+        "client_name": "JAUMER ANDRES OROZCO ",
+        "task_name": "Día 3",
+        "task_type": "d3",
+        "summary": "Día 3",
+        "description": "Día 3 para JAUMER ANDRES OROZCO ",
+        "start_date": "2026-01-18",
+        "start_time": "09:00:00",
+        "end_date": "2026-01-18",
+        "end_time": "17:00:00",
+        "veterinarian": "EL VERGEL ",
+        "location": "HUILA",
+        "status": "pending",
+        "suffix": "jaumer_andres_orozco__task_1",
+        "task_group_id": null,
+        "color_background": "#e3f2fd",
+        "color_foreground": "#0d47a1",
+        "created_by": 1,
+        "client": {
+            "id": 5,
+            "created_at": "2025-07-04T13:38:31",
+            "updated_at": "2025-10-17T13:21:46",
+            "number_document": "1032443326",
+            "specialty": "Client",
+            "email": "jorozco06@unisalle.edu.co",
+            "phone": "3123618938",
+            "full_name": "JAUMER ANDRES OROZCO ",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/5/0717b236-e685-442f-9ce9-953bac63249e.enc",
+            "roles": [
+                {
+                    "id": 3,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Client"
+                }
+            ]
+        },
+        "creator": {
+            "id": 1,
+            "created_at": "2025-07-03T11:18:18",
+            "updated_at": "2025-10-17T18:11:04",
+            "number_document": "1234567890",
+            "specialty": "Admin",
+            "email": "admin@biogenetic.com",
+            "phone": "1234567890",
+            "full_name": "BIOGENETIC ADMIN",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/1/d9c2a59a-cc8a-4166-920f-f210024aa616.png",
+            "roles": [
+                {
+                    "id": 1,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Admin"
+                }
+            ]
+        }
+    },
+    {
+        "id": 202,
+        "created_at": "2026-01-14T15:43:58",
+        "updated_at": "2026-01-14T15:43:58",
+        "client_id": 5,
+        "client_name": "JAUMER ANDRES OROZCO ",
+        "task_name": "Día 1",
+        "task_type": "d1",
+        "summary": "Día 1",
+        "description": "Día 1 para JAUMER ANDRES OROZCO ",
+        "start_date": "2026-01-18",
+        "start_time": "09:00:00",
+        "end_date": "2026-01-18",
+        "end_time": "17:00:00",
+        "veterinarian": "JAUMER",
+        "location": "YAGUARA",
+        "status": "pending",
+        "suffix": "jaumer_andres_orozco__task_10",
+        "task_group_id": null,
+        "color_background": "#e3f2fd",
+        "color_foreground": "#0d47a1",
+        "created_by": 1,
+        "client": {
+            "id": 5,
+            "created_at": "2025-07-04T13:38:31",
+            "updated_at": "2025-10-17T13:21:46",
+            "number_document": "1032443326",
+            "specialty": "Client",
+            "email": "jorozco06@unisalle.edu.co",
+            "phone": "3123618938",
+            "full_name": "JAUMER ANDRES OROZCO ",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/5/0717b236-e685-442f-9ce9-953bac63249e.enc",
+            "roles": [
+                {
+                    "id": 3,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Client"
+                }
+            ]
+        },
+        "creator": {
+            "id": 1,
+            "created_at": "2025-07-03T11:18:18",
+            "updated_at": "2025-10-17T18:11:04",
+            "number_document": "1234567890",
+            "specialty": "Admin",
+            "email": "admin@biogenetic.com",
+            "phone": "1234567890",
+            "full_name": "BIOGENETIC ADMIN",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/1/d9c2a59a-cc8a-4166-920f-f210024aa616.png",
+            "roles": [
+                {
+                    "id": 1,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Admin"
+                }
+            ]
+        }
+    },
+    {
+        "id": 212,
+        "created_at": "2026-01-14T15:44:21",
+        "updated_at": "2026-01-14T15:44:21",
+        "client_id": 5,
+        "client_name": "JAUMER ANDRES OROZCO ",
+        "task_name": "Día 1",
+        "task_type": "d1",
+        "summary": "Día 1",
+        "description": "Día 1 para JAUMER ANDRES OROZCO ",
+        "start_date": "2026-01-18",
+        "start_time": "09:00:00",
+        "end_date": "2026-01-18",
+        "end_time": "17:00:00",
+        "veterinarian": "JAUMER",
+        "location": "FACA",
+        "status": "pending",
+        "suffix": "jaumer_andres_orozco__task_19",
+        "task_group_id": null,
+        "color_background": "#e3f2fd",
+        "color_foreground": "#0d47a1",
+        "created_by": 1,
+        "client": {
+            "id": 5,
+            "created_at": "2025-07-04T13:38:31",
+            "updated_at": "2025-10-17T13:21:46",
+            "number_document": "1032443326",
+            "specialty": "Client",
+            "email": "jorozco06@unisalle.edu.co",
+            "phone": "3123618938",
+            "full_name": "JAUMER ANDRES OROZCO ",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/5/0717b236-e685-442f-9ce9-953bac63249e.enc",
+            "roles": [
+                {
+                    "id": 3,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Client"
+                }
+            ]
+        },
+        "creator": {
+            "id": 1,
+            "created_at": "2025-07-03T11:18:18",
+            "updated_at": "2025-10-17T18:11:04",
+            "number_document": "1234567890",
+            "specialty": "Admin",
+            "email": "admin@biogenetic.com",
+            "phone": "1234567890",
+            "full_name": "BIOGENETIC ADMIN",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/1/d9c2a59a-cc8a-4166-920f-f210024aa616.png",
+            "roles": [
+                {
+                    "id": 1,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Admin"
+                }
+            ]
+        }
+    },
+    {
+        "id": 214,
+        "created_at": "2026-01-14T15:44:21",
+        "updated_at": "2026-01-14T15:44:21",
+        "client_id": 5,
+        "client_name": "JAUMER ANDRES OROZCO ",
+        "task_name": "Día 2",
+        "task_type": "d2",
+        "summary": "Día 2",
+        "description": "Día 2 para JAUMER ANDRES OROZCO ",
+        "start_date": "2026-01-19",
+        "start_time": "09:00:00",
+        "end_date": "2026-01-19",
+        "end_time": "17:00:00",
+        "veterinarian": "JAUMER",
+        "location": "FACA",
+        "status": "pending",
+        "suffix": "jaumer_andres_orozco__task_19",
+        "task_group_id": null,
+        "color_background": "#e3f2fd",
+        "color_foreground": "#0d47a1",
+        "created_by": 1,
+        "client": {
+            "id": 5,
+            "created_at": "2025-07-04T13:38:31",
+            "updated_at": "2025-10-17T13:21:46",
+            "number_document": "1032443326",
+            "specialty": "Client",
+            "email": "jorozco06@unisalle.edu.co",
+            "phone": "3123618938",
+            "full_name": "JAUMER ANDRES OROZCO ",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/5/0717b236-e685-442f-9ce9-953bac63249e.enc",
+            "roles": [
+                {
+                    "id": 3,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Client"
+                }
+            ]
+        },
+        "creator": {
+            "id": 1,
+            "created_at": "2025-07-03T11:18:18",
+            "updated_at": "2025-10-17T18:11:04",
+            "number_document": "1234567890",
+            "specialty": "Admin",
+            "email": "admin@biogenetic.com",
+            "phone": "1234567890",
+            "full_name": "BIOGENETIC ADMIN",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/1/d9c2a59a-cc8a-4166-920f-f210024aa616.png",
+            "roles": [
+                {
+                    "id": 1,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Admin"
+                }
+            ]
+        }
+    },
+    {
+        "id": 197,
+        "created_at": "2026-01-14T15:42:32",
+        "updated_at": "2026-01-14T15:42:32",
+        "client_id": 5,
+        "client_name": "JAUMER ANDRES OROZCO ",
+        "task_name": "Día 4",
+        "task_type": "d4",
+        "summary": "Día 4",
+        "description": "Día 4 para JAUMER ANDRES OROZCO ",
+        "start_date": "2026-01-19",
+        "start_time": "09:00:00",
+        "end_date": "2026-01-19",
+        "end_time": "17:00:00",
+        "veterinarian": "EL VERGEL ",
+        "location": "HUILA",
+        "status": "pending",
+        "suffix": "jaumer_andres_orozco__task_1",
+        "task_group_id": null,
+        "color_background": "#e3f2fd",
+        "color_foreground": "#0d47a1",
+        "created_by": 1,
+        "client": {
+            "id": 5,
+            "created_at": "2025-07-04T13:38:31",
+            "updated_at": "2025-10-17T13:21:46",
+            "number_document": "1032443326",
+            "specialty": "Client",
+            "email": "jorozco06@unisalle.edu.co",
+            "phone": "3123618938",
+            "full_name": "JAUMER ANDRES OROZCO ",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/5/0717b236-e685-442f-9ce9-953bac63249e.enc",
+            "roles": [
+                {
+                    "id": 3,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Client"
+                }
+            ]
+        },
+        "creator": {
+            "id": 1,
+            "created_at": "2025-07-03T11:18:18",
+            "updated_at": "2025-10-17T18:11:04",
+            "number_document": "1234567890",
+            "specialty": "Admin",
+            "email": "admin@biogenetic.com",
+            "phone": "1234567890",
+            "full_name": "BIOGENETIC ADMIN",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/1/d9c2a59a-cc8a-4166-920f-f210024aa616.png",
+            "roles": [
+                {
+                    "id": 1,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Admin"
+                }
+            ]
+        }
+    },
+    {
+        "id": 203,
+        "created_at": "2026-01-14T15:43:58",
+        "updated_at": "2026-01-14T15:43:58",
+        "client_id": 5,
+        "client_name": "JAUMER ANDRES OROZCO ",
+        "task_name": "Día 2",
+        "task_type": "d2",
+        "summary": "Día 2",
+        "description": "Día 2 para JAUMER ANDRES OROZCO ",
+        "start_date": "2026-01-19",
+        "start_time": "09:00:00",
+        "end_date": "2026-01-19",
+        "end_time": "17:00:00",
+        "veterinarian": "JAUMER",
+        "location": "YAGUARA",
+        "status": "pending",
+        "suffix": "jaumer_andres_orozco__task_10",
+        "task_group_id": null,
+        "color_background": "#e3f2fd",
+        "color_foreground": "#0d47a1",
+        "created_by": 1,
+        "client": {
+            "id": 5,
+            "created_at": "2025-07-04T13:38:31",
+            "updated_at": "2025-10-17T13:21:46",
+            "number_document": "1032443326",
+            "specialty": "Client",
+            "email": "jorozco06@unisalle.edu.co",
+            "phone": "3123618938",
+            "full_name": "JAUMER ANDRES OROZCO ",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/5/0717b236-e685-442f-9ce9-953bac63249e.enc",
+            "roles": [
+                {
+                    "id": 3,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Client"
+                }
+            ]
+        },
+        "creator": {
+            "id": 1,
+            "created_at": "2025-07-03T11:18:18",
+            "updated_at": "2025-10-17T18:11:04",
+            "number_document": "1234567890",
+            "specialty": "Admin",
+            "email": "admin@biogenetic.com",
+            "phone": "1234567890",
+            "full_name": "BIOGENETIC ADMIN",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/1/d9c2a59a-cc8a-4166-920f-f210024aa616.png",
+            "roles": [
+                {
+                    "id": 1,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Admin"
+                }
+            ]
+        }
+    },
+    {
+        "id": 204,
+        "created_at": "2026-01-14T15:43:58",
+        "updated_at": "2026-01-14T15:43:58",
+        "client_id": 5,
+        "client_name": "JAUMER ANDRES OROZCO ",
+        "task_name": "Día 3",
+        "task_type": "d3",
+        "summary": "Día 3",
+        "description": "Día 3 para JAUMER ANDRES OROZCO ",
+        "start_date": "2026-01-20",
+        "start_time": "09:00:00",
+        "end_date": "2026-01-20",
+        "end_time": "17:00:00",
+        "veterinarian": "JAUMER",
+        "location": "YAGUARA",
+        "status": "pending",
+        "suffix": "jaumer_andres_orozco__task_10",
+        "task_group_id": null,
+        "color_background": "#e3f2fd",
+        "color_foreground": "#0d47a1",
+        "created_by": 1,
+        "client": {
+            "id": 5,
+            "created_at": "2025-07-04T13:38:31",
+            "updated_at": "2025-10-17T13:21:46",
+            "number_document": "1032443326",
+            "specialty": "Client",
+            "email": "jorozco06@unisalle.edu.co",
+            "phone": "3123618938",
+            "full_name": "JAUMER ANDRES OROZCO ",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/5/0717b236-e685-442f-9ce9-953bac63249e.enc",
+            "roles": [
+                {
+                    "id": 3,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Client"
+                }
+            ]
+        },
+        "creator": {
+            "id": 1,
+            "created_at": "2025-07-03T11:18:18",
+            "updated_at": "2025-10-17T18:11:04",
+            "number_document": "1234567890",
+            "specialty": "Admin",
+            "email": "admin@biogenetic.com",
+            "phone": "1234567890",
+            "full_name": "BIOGENETIC ADMIN",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/1/d9c2a59a-cc8a-4166-920f-f210024aa616.png",
+            "roles": [
+                {
+                    "id": 1,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Admin"
+                }
+            ]
+        }
+    },
+    {
+        "id": 211,
+        "created_at": "2026-01-14T15:44:21",
+        "updated_at": "2026-01-14T15:44:21",
+        "client_id": 5,
+        "client_name": "JAUMER ANDRES OROZCO ",
+        "task_name": "Día 3",
+        "task_type": "d3",
+        "summary": "Día 3",
+        "description": "Día 3 para JAUMER ANDRES OROZCO ",
+        "start_date": "2026-01-20",
+        "start_time": "09:00:00",
+        "end_date": "2026-01-20",
+        "end_time": "17:00:00",
+        "veterinarian": "JAUMER",
+        "location": "FACA",
+        "status": "pending",
+        "suffix": "jaumer_andres_orozco__task_19",
+        "task_group_id": null,
+        "color_background": "#e3f2fd",
+        "color_foreground": "#0d47a1",
+        "created_by": 1,
+        "client": {
+            "id": 5,
+            "created_at": "2025-07-04T13:38:31",
+            "updated_at": "2025-10-17T13:21:46",
+            "number_document": "1032443326",
+            "specialty": "Client",
+            "email": "jorozco06@unisalle.edu.co",
+            "phone": "3123618938",
+            "full_name": "JAUMER ANDRES OROZCO ",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/5/0717b236-e685-442f-9ce9-953bac63249e.enc",
+            "roles": [
+                {
+                    "id": 3,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Client"
+                }
+            ]
+        },
+        "creator": {
+            "id": 1,
+            "created_at": "2025-07-03T11:18:18",
+            "updated_at": "2025-10-17T18:11:04",
+            "number_document": "1234567890",
+            "specialty": "Admin",
+            "email": "admin@biogenetic.com",
+            "phone": "1234567890",
+            "full_name": "BIOGENETIC ADMIN",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/1/d9c2a59a-cc8a-4166-920f-f210024aa616.png",
+            "roles": [
+                {
+                    "id": 1,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Admin"
+                }
+            ]
+        }
+    },
+    {
+        "id": 191,
+        "created_at": "2026-01-14T15:42:32",
+        "updated_at": "2026-01-14T15:42:32",
+        "client_id": 5,
+        "client_name": "JAUMER ANDRES OROZCO ",
+        "task_name": "Día 5",
+        "task_type": "d5",
+        "summary": "Día 5",
+        "description": "Día 5 para JAUMER ANDRES OROZCO ",
+        "start_date": "2026-01-20",
+        "start_time": "09:00:00",
+        "end_date": "2026-01-20",
+        "end_time": "17:00:00",
+        "veterinarian": "EL VERGEL ",
+        "location": "HUILA",
+        "status": "pending",
+        "suffix": "jaumer_andres_orozco__task_1",
+        "task_group_id": null,
+        "color_background": "#e3f2fd",
+        "color_foreground": "#0d47a1",
+        "created_by": 1,
+        "client": {
+            "id": 5,
+            "created_at": "2025-07-04T13:38:31",
+            "updated_at": "2025-10-17T13:21:46",
+            "number_document": "1032443326",
+            "specialty": "Client",
+            "email": "jorozco06@unisalle.edu.co",
+            "phone": "3123618938",
+            "full_name": "JAUMER ANDRES OROZCO ",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/5/0717b236-e685-442f-9ce9-953bac63249e.enc",
+            "roles": [
+                {
+                    "id": 3,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Client"
+                }
+            ]
+        },
+        "creator": {
+            "id": 1,
+            "created_at": "2025-07-03T11:18:18",
+            "updated_at": "2025-10-17T18:11:04",
+            "number_document": "1234567890",
+            "specialty": "Admin",
+            "email": "admin@biogenetic.com",
+            "phone": "1234567890",
+            "full_name": "BIOGENETIC ADMIN",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/1/d9c2a59a-cc8a-4166-920f-f210024aa616.png",
+            "roles": [
+                {
+                    "id": 1,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Admin"
+                }
+            ]
+        }
+    },
+    {
+        "id": 210,
+        "created_at": "2026-01-14T15:44:21",
+        "updated_at": "2026-01-14T15:44:21",
+        "client_id": 5,
+        "client_name": "JAUMER ANDRES OROZCO ",
+        "task_name": "Día 4",
+        "task_type": "d4",
+        "summary": "Día 4",
+        "description": "Día 4 para JAUMER ANDRES OROZCO ",
+        "start_date": "2026-01-21",
+        "start_time": "09:00:00",
+        "end_date": "2026-01-21",
+        "end_time": "17:00:00",
+        "veterinarian": "JAUMER",
+        "location": "FACA",
+        "status": "pending",
+        "suffix": "jaumer_andres_orozco__task_19",
+        "task_group_id": null,
+        "color_background": "#e3f2fd",
+        "color_foreground": "#0d47a1",
+        "created_by": 1,
+        "client": {
+            "id": 5,
+            "created_at": "2025-07-04T13:38:31",
+            "updated_at": "2025-10-17T13:21:46",
+            "number_document": "1032443326",
+            "specialty": "Client",
+            "email": "jorozco06@unisalle.edu.co",
+            "phone": "3123618938",
+            "full_name": "JAUMER ANDRES OROZCO ",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/5/0717b236-e685-442f-9ce9-953bac63249e.enc",
+            "roles": [
+                {
+                    "id": 3,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Client"
+                }
+            ]
+        },
+        "creator": {
+            "id": 1,
+            "created_at": "2025-07-03T11:18:18",
+            "updated_at": "2025-10-17T18:11:04",
+            "number_document": "1234567890",
+            "specialty": "Admin",
+            "email": "admin@biogenetic.com",
+            "phone": "1234567890",
+            "full_name": "BIOGENETIC ADMIN",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/1/d9c2a59a-cc8a-4166-920f-f210024aa616.png",
+            "roles": [
+                {
+                    "id": 1,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Admin"
+                }
+            ]
+        }
+    },
+    {
+        "id": 205,
+        "created_at": "2026-01-14T15:43:58",
+        "updated_at": "2026-01-14T15:43:58",
+        "client_id": 5,
+        "client_name": "JAUMER ANDRES OROZCO ",
+        "task_name": "Día 4",
+        "task_type": "d4",
+        "summary": "Día 4",
+        "description": "Día 4 para JAUMER ANDRES OROZCO ",
+        "start_date": "2026-01-21",
+        "start_time": "09:00:00",
+        "end_date": "2026-01-21",
+        "end_time": "17:00:00",
+        "veterinarian": "JAUMER",
+        "location": "YAGUARA",
+        "status": "pending",
+        "suffix": "jaumer_andres_orozco__task_10",
+        "task_group_id": null,
+        "color_background": "#e3f2fd",
+        "color_foreground": "#0d47a1",
+        "created_by": 1,
+        "client": {
+            "id": 5,
+            "created_at": "2025-07-04T13:38:31",
+            "updated_at": "2025-10-17T13:21:46",
+            "number_document": "1032443326",
+            "specialty": "Client",
+            "email": "jorozco06@unisalle.edu.co",
+            "phone": "3123618938",
+            "full_name": "JAUMER ANDRES OROZCO ",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/5/0717b236-e685-442f-9ce9-953bac63249e.enc",
+            "roles": [
+                {
+                    "id": 3,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Client"
+                }
+            ]
+        },
+        "creator": {
+            "id": 1,
+            "created_at": "2025-07-03T11:18:18",
+            "updated_at": "2025-10-17T18:11:04",
+            "number_document": "1234567890",
+            "specialty": "Admin",
+            "email": "admin@biogenetic.com",
+            "phone": "1234567890",
+            "full_name": "BIOGENETIC ADMIN",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/1/d9c2a59a-cc8a-4166-920f-f210024aa616.png",
+            "roles": [
+                {
+                    "id": 1,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Admin"
+                }
+            ]
+        }
+    },
+    {
+        "id": 196,
+        "created_at": "2026-01-14T15:42:32",
+        "updated_at": "2026-01-14T15:42:32",
+        "client_id": 5,
+        "client_name": "JAUMER ANDRES OROZCO ",
+        "task_name": "Día 6",
+        "task_type": "d6",
+        "summary": "Día 6",
+        "description": "Día 6 para JAUMER ANDRES OROZCO ",
+        "start_date": "2026-01-21",
+        "start_time": "09:00:00",
+        "end_date": "2026-01-21",
+        "end_time": "17:00:00",
+        "veterinarian": "EL VERGEL ",
+        "location": "HUILA",
+        "status": "pending",
+        "suffix": "jaumer_andres_orozco__task_1",
+        "task_group_id": null,
+        "color_background": "#e3f2fd",
+        "color_foreground": "#0d47a1",
+        "created_by": 1,
+        "client": {
+            "id": 5,
+            "created_at": "2025-07-04T13:38:31",
+            "updated_at": "2025-10-17T13:21:46",
+            "number_document": "1032443326",
+            "specialty": "Client",
+            "email": "jorozco06@unisalle.edu.co",
+            "phone": "3123618938",
+            "full_name": "JAUMER ANDRES OROZCO ",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/5/0717b236-e685-442f-9ce9-953bac63249e.enc",
+            "roles": [
+                {
+                    "id": 3,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Client"
+                }
+            ]
+        },
+        "creator": {
+            "id": 1,
+            "created_at": "2025-07-03T11:18:18",
+            "updated_at": "2025-10-17T18:11:04",
+            "number_document": "1234567890",
+            "specialty": "Admin",
+            "email": "admin@biogenetic.com",
+            "phone": "1234567890",
+            "full_name": "BIOGENETIC ADMIN",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/1/d9c2a59a-cc8a-4166-920f-f210024aa616.png",
+            "roles": [
+                {
+                    "id": 1,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Admin"
+                }
+            ]
+        }
+    },
+    {
+        "id": 206,
+        "created_at": "2026-01-14T15:43:58",
+        "updated_at": "2026-01-14T15:43:58",
+        "client_id": 5,
+        "client_name": "JAUMER ANDRES OROZCO ",
+        "task_name": "Día 5",
+        "task_type": "d5",
+        "summary": "Día 5",
+        "description": "Día 5 para JAUMER ANDRES OROZCO ",
+        "start_date": "2026-01-22",
+        "start_time": "09:00:00",
+        "end_date": "2026-01-22",
+        "end_time": "17:00:00",
+        "veterinarian": "JAUMER",
+        "location": "YAGUARA",
+        "status": "pending",
+        "suffix": "jaumer_andres_orozco__task_10",
+        "task_group_id": null,
+        "color_background": "#e3f2fd",
+        "color_foreground": "#0d47a1",
+        "created_by": 1,
+        "client": {
+            "id": 5,
+            "created_at": "2025-07-04T13:38:31",
+            "updated_at": "2025-10-17T13:21:46",
+            "number_document": "1032443326",
+            "specialty": "Client",
+            "email": "jorozco06@unisalle.edu.co",
+            "phone": "3123618938",
+            "full_name": "JAUMER ANDRES OROZCO ",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/5/0717b236-e685-442f-9ce9-953bac63249e.enc",
+            "roles": [
+                {
+                    "id": 3,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Client"
+                }
+            ]
+        },
+        "creator": {
+            "id": 1,
+            "created_at": "2025-07-03T11:18:18",
+            "updated_at": "2025-10-17T18:11:04",
+            "number_document": "1234567890",
+            "specialty": "Admin",
+            "email": "admin@biogenetic.com",
+            "phone": "1234567890",
+            "full_name": "BIOGENETIC ADMIN",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/1/d9c2a59a-cc8a-4166-920f-f210024aa616.png",
+            "roles": [
+                {
+                    "id": 1,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Admin"
+                }
+            ]
+        }
+    },
+    {
+        "id": 199,
+        "created_at": "2026-01-14T15:42:32",
+        "updated_at": "2026-01-14T15:42:32",
+        "client_id": 5,
+        "client_name": "JAUMER ANDRES OROZCO ",
+        "task_name": "Día 7",
+        "task_type": "d7",
+        "summary": "Día 7",
+        "description": "Día 7 para JAUMER ANDRES OROZCO ",
+        "start_date": "2026-01-22",
+        "start_time": "09:00:00",
+        "end_date": "2026-01-22",
+        "end_time": "17:00:00",
+        "veterinarian": "EL VERGEL ",
+        "location": "HUILA",
+        "status": "pending",
+        "suffix": "jaumer_andres_orozco__task_1",
+        "task_group_id": null,
+        "color_background": "#e3f2fd",
+        "color_foreground": "#0d47a1",
+        "created_by": 1,
+        "client": {
+            "id": 5,
+            "created_at": "2025-07-04T13:38:31",
+            "updated_at": "2025-10-17T13:21:46",
+            "number_document": "1032443326",
+            "specialty": "Client",
+            "email": "jorozco06@unisalle.edu.co",
+            "phone": "3123618938",
+            "full_name": "JAUMER ANDRES OROZCO ",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/5/0717b236-e685-442f-9ce9-953bac63249e.enc",
+            "roles": [
+                {
+                    "id": 3,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Client"
+                }
+            ]
+        },
+        "creator": {
+            "id": 1,
+            "created_at": "2025-07-03T11:18:18",
+            "updated_at": "2025-10-17T18:11:04",
+            "number_document": "1234567890",
+            "specialty": "Admin",
+            "email": "admin@biogenetic.com",
+            "phone": "1234567890",
+            "full_name": "BIOGENETIC ADMIN",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/1/d9c2a59a-cc8a-4166-920f-f210024aa616.png",
+            "roles": [
+                {
+                    "id": 1,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Admin"
+                }
+            ]
+        }
+    },
+    {
+        "id": 215,
+        "created_at": "2026-01-14T15:44:21",
+        "updated_at": "2026-01-14T15:44:21",
+        "client_id": 5,
+        "client_name": "JAUMER ANDRES OROZCO ",
+        "task_name": "Día 5",
+        "task_type": "d5",
+        "summary": "Día 5",
+        "description": "Día 5 para JAUMER ANDRES OROZCO ",
+        "start_date": "2026-01-22",
+        "start_time": "09:00:00",
+        "end_date": "2026-01-22",
+        "end_time": "17:00:00",
+        "veterinarian": "JAUMER",
+        "location": "FACA",
+        "status": "pending",
+        "suffix": "jaumer_andres_orozco__task_19",
+        "task_group_id": null,
+        "color_background": "#e3f2fd",
+        "color_foreground": "#0d47a1",
+        "created_by": 1,
+        "client": {
+            "id": 5,
+            "created_at": "2025-07-04T13:38:31",
+            "updated_at": "2025-10-17T13:21:46",
+            "number_document": "1032443326",
+            "specialty": "Client",
+            "email": "jorozco06@unisalle.edu.co",
+            "phone": "3123618938",
+            "full_name": "JAUMER ANDRES OROZCO ",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/5/0717b236-e685-442f-9ce9-953bac63249e.enc",
+            "roles": [
+                {
+                    "id": 3,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Client"
+                }
+            ]
+        },
+        "creator": {
+            "id": 1,
+            "created_at": "2025-07-03T11:18:18",
+            "updated_at": "2025-10-17T18:11:04",
+            "number_document": "1234567890",
+            "specialty": "Admin",
+            "email": "admin@biogenetic.com",
+            "phone": "1234567890",
+            "full_name": "BIOGENETIC ADMIN",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/1/d9c2a59a-cc8a-4166-920f-f210024aa616.png",
+            "roles": [
+                {
+                    "id": 1,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Admin"
+                }
+            ]
+        }
+    },
+    {
+        "id": 207,
+        "created_at": "2026-01-14T15:43:58",
+        "updated_at": "2026-01-14T15:43:58",
+        "client_id": 5,
+        "client_name": "JAUMER ANDRES OROZCO ",
+        "task_name": "Día 6",
+        "task_type": "d6",
+        "summary": "Día 6",
+        "description": "Día 6 para JAUMER ANDRES OROZCO ",
+        "start_date": "2026-01-23",
+        "start_time": "09:00:00",
+        "end_date": "2026-01-23",
+        "end_time": "17:00:00",
+        "veterinarian": "JAUMER",
+        "location": "YAGUARA",
+        "status": "pending",
+        "suffix": "jaumer_andres_orozco__task_10",
+        "task_group_id": null,
+        "color_background": "#e3f2fd",
+        "color_foreground": "#0d47a1",
+        "created_by": 1,
+        "client": {
+            "id": 5,
+            "created_at": "2025-07-04T13:38:31",
+            "updated_at": "2025-10-17T13:21:46",
+            "number_document": "1032443326",
+            "specialty": "Client",
+            "email": "jorozco06@unisalle.edu.co",
+            "phone": "3123618938",
+            "full_name": "JAUMER ANDRES OROZCO ",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/5/0717b236-e685-442f-9ce9-953bac63249e.enc",
+            "roles": [
+                {
+                    "id": 3,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Client"
+                }
+            ]
+        },
+        "creator": {
+            "id": 1,
+            "created_at": "2025-07-03T11:18:18",
+            "updated_at": "2025-10-17T18:11:04",
+            "number_document": "1234567890",
+            "specialty": "Admin",
+            "email": "admin@biogenetic.com",
+            "phone": "1234567890",
+            "full_name": "BIOGENETIC ADMIN",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/1/d9c2a59a-cc8a-4166-920f-f210024aa616.png",
+            "roles": [
+                {
+                    "id": 1,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Admin"
+                }
+            ]
+        }
+    },
+    {
+        "id": 217,
+        "created_at": "2026-01-14T15:44:21",
+        "updated_at": "2026-01-14T15:44:21",
+        "client_id": 5,
+        "client_name": "JAUMER ANDRES OROZCO ",
+        "task_name": "Día 6",
+        "task_type": "d6",
+        "summary": "Día 6",
+        "description": "Día 6 para JAUMER ANDRES OROZCO ",
+        "start_date": "2026-01-23",
+        "start_time": "09:00:00",
+        "end_date": "2026-01-23",
+        "end_time": "17:00:00",
+        "veterinarian": "JAUMER",
+        "location": "FACA",
+        "status": "pending",
+        "suffix": "jaumer_andres_orozco__task_19",
+        "task_group_id": null,
+        "color_background": "#e3f2fd",
+        "color_foreground": "#0d47a1",
+        "created_by": 1,
+        "client": {
+            "id": 5,
+            "created_at": "2025-07-04T13:38:31",
+            "updated_at": "2025-10-17T13:21:46",
+            "number_document": "1032443326",
+            "specialty": "Client",
+            "email": "jorozco06@unisalle.edu.co",
+            "phone": "3123618938",
+            "full_name": "JAUMER ANDRES OROZCO ",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/5/0717b236-e685-442f-9ce9-953bac63249e.enc",
+            "roles": [
+                {
+                    "id": 3,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Client"
+                }
+            ]
+        },
+        "creator": {
+            "id": 1,
+            "created_at": "2025-07-03T11:18:18",
+            "updated_at": "2025-10-17T18:11:04",
+            "number_document": "1234567890",
+            "specialty": "Admin",
+            "email": "admin@biogenetic.com",
+            "phone": "1234567890",
+            "full_name": "BIOGENETIC ADMIN",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/1/d9c2a59a-cc8a-4166-920f-f210024aa616.png",
+            "roles": [
+                {
+                    "id": 1,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Admin"
+                }
+            ]
+        }
+    },
+    {
+        "id": 208,
+        "created_at": "2026-01-14T15:43:58",
+        "updated_at": "2026-01-14T15:43:58",
+        "client_id": 5,
+        "client_name": "JAUMER ANDRES OROZCO ",
+        "task_name": "Día 7",
+        "task_type": "d7",
+        "summary": "Día 7",
+        "description": "Día 7 para JAUMER ANDRES OROZCO ",
+        "start_date": "2026-01-24",
+        "start_time": "09:00:00",
+        "end_date": "2026-01-24",
+        "end_time": "17:00:00",
+        "veterinarian": "JAUMER",
+        "location": "YAGUARA",
+        "status": "pending",
+        "suffix": "jaumer_andres_orozco__task_10",
+        "task_group_id": null,
+        "color_background": "#e3f2fd",
+        "color_foreground": "#0d47a1",
+        "created_by": 1,
+        "client": {
+            "id": 5,
+            "created_at": "2025-07-04T13:38:31",
+            "updated_at": "2025-10-17T13:21:46",
+            "number_document": "1032443326",
+            "specialty": "Client",
+            "email": "jorozco06@unisalle.edu.co",
+            "phone": "3123618938",
+            "full_name": "JAUMER ANDRES OROZCO ",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/5/0717b236-e685-442f-9ce9-953bac63249e.enc",
+            "roles": [
+                {
+                    "id": 3,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Client"
+                }
+            ]
+        },
+        "creator": {
+            "id": 1,
+            "created_at": "2025-07-03T11:18:18",
+            "updated_at": "2025-10-17T18:11:04",
+            "number_document": "1234567890",
+            "specialty": "Admin",
+            "email": "admin@biogenetic.com",
+            "phone": "1234567890",
+            "full_name": "BIOGENETIC ADMIN",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/1/d9c2a59a-cc8a-4166-920f-f210024aa616.png",
+            "roles": [
+                {
+                    "id": 1,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Admin"
+                }
+            ]
+        }
+    },
+    {
+        "id": 216,
+        "created_at": "2026-01-14T15:44:21",
+        "updated_at": "2026-01-14T15:44:21",
+        "client_id": 5,
+        "client_name": "JAUMER ANDRES OROZCO ",
+        "task_name": "Día 7",
+        "task_type": "d7",
+        "summary": "Día 7",
+        "description": "Día 7 para JAUMER ANDRES OROZCO ",
+        "start_date": "2026-01-24",
+        "start_time": "09:00:00",
+        "end_date": "2026-01-24",
+        "end_time": "17:00:00",
+        "veterinarian": "JAUMER",
+        "location": "FACA",
+        "status": "pending",
+        "suffix": "jaumer_andres_orozco__task_19",
+        "task_group_id": null,
+        "color_background": "#e3f2fd",
+        "color_foreground": "#0d47a1",
+        "created_by": 1,
+        "client": {
+            "id": 5,
+            "created_at": "2025-07-04T13:38:31",
+            "updated_at": "2025-10-17T13:21:46",
+            "number_document": "1032443326",
+            "specialty": "Client",
+            "email": "jorozco06@unisalle.edu.co",
+            "phone": "3123618938",
+            "full_name": "JAUMER ANDRES OROZCO ",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/5/0717b236-e685-442f-9ce9-953bac63249e.enc",
+            "roles": [
+                {
+                    "id": 3,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Client"
+                }
+            ]
+        },
+        "creator": {
+            "id": 1,
+            "created_at": "2025-07-03T11:18:18",
+            "updated_at": "2025-10-17T18:11:04",
+            "number_document": "1234567890",
+            "specialty": "Admin",
+            "email": "admin@biogenetic.com",
+            "phone": "1234567890",
+            "full_name": "BIOGENETIC ADMIN",
+            "type_document": "identity_card",
+            "profile_image_url": "https://biogenetic-app.s3.us-east-2.amazonaws.com/profile-pictures/1/d9c2a59a-cc8a-4166-920f-f210024aa616.png",
+            "roles": [
+                {
+                    "id": 1,
+                    "created_at": "2025-07-03T11:18:17",
+                    "updated_at": "2025-07-03T11:18:17",
+                    "name": "Admin"
+                }
+            ]
+        }
+    }
+]

@@ -61,25 +61,37 @@ def fetch_produccion_context(
                 registro.toro_nombre = toro_db.name
                 registro.race = toro_db.race.name if toro_db.race else "N/A"
 
-    # Inicializar resumen de toros con datos de Opus
-    # Cada registro de Opus es una muestra diferente, no se agrupan
-    resumen_toros = []
+# Agrupar resumen de toros - cada toro aparece una sola vez con totales
+    # Inicializar diccionario para agrupar por toro
+    toros_agrupados = {}
+    
+    # Primero, agrupar todos los registros por toro
     for r in registros_schema:
-        # Crear una entrada separada para cada registro (muestra)
-        toro_entry = {
-            'toro_nombre': r.toro_nombre,
-            'race': r.race,
-            'numero_registro': r.donante_code,
-            'cantidad_semen_trabajada': 0.0,  # Se llenará con los outputs
-            'total_donadoras': 1,  # Cada registro es una donante
-            'cantidad_total_ctv': r.ctv,
-            'produccion_total': r.prevision,
-            'porcentaje': 0.0,  # Se calculará después
-            'total_embriones': r.total_embriones,
-            'total_oocitos': r.total_oocitos
-        }
-        resumen_toros.append(toro_entry)
-
+        toro_nombre = r.toro_nombre or 'Desconocido'
+        
+        if toro_nombre not in toros_agrupados:
+            toros_agrupados[toro_nombre] = {
+                'toro_nombre': toro_nombre,
+                'race': r.race,
+                'numero_registro': r.donante_code,  # Se usará el primer registro
+                'cantidad_semen_trabajada': 0.0,
+                'total_donadoras': 0,
+                'cantidad_total_ctv': 0,
+                'produccion_total': 0,
+                'total_embriones': 0,
+                'total_oocitos': 0,
+                'registros': []  # Guardar registros para cálculos posteriores
+            }
+        
+        # Acumular valores
+        toro_grupo = toros_agrupados[toro_nombre]
+        toro_grupo['total_donadoras'] += 1
+        toro_grupo['cantidad_total_ctv'] += r.ctv
+        toro_grupo['produccion_total'] += r.prevision
+        toro_grupo['total_embriones'] += r.total_embriones
+        toro_grupo['total_oocitos'] += r.total_oocitos
+        toro_grupo['registros'].append(r)
+    
     # Obtener los outputs directamente relacionados con esta producción embrionaria
     # usando la tabla intermedia produccion_embrionaria_output
     outputs_relacionados = db.query(Output).join(
@@ -88,38 +100,33 @@ def fetch_produccion_context(
         produccion_embrionaria_output.c.produccion_embrionaria_id == produccion_id
     ).all()
     
-    # Crear un diccionario para mapear outputs por toro
+    # Agrupar outputs por toro y sumar cantidades
     outputs_por_toro = {}
     for output in outputs_relacionados:
         bull = output.input.bull
         if not bull:
             continue
             
-        if bull.name not in outputs_por_toro:
-            outputs_por_toro[bull.name] = []
-        outputs_por_toro[bull.name].append(output)
+        toro_nombre = bull.name
+        if toro_nombre not in outputs_por_toro:
+            outputs_por_toro[toro_nombre] = 0.0
+        outputs_por_toro[toro_nombre] += float(output.quantity_output)
     
-    # Asignar outputs a las muestras correspondientes
-    # Distribuir los outputs entre las muestras del mismo toro
-    for toro_entry in resumen_toros:
-        toro_nombre = toro_entry['toro_nombre']
+    # Asignar cantidades de semen a los grupos de toros
+    for toro_nombre, toro_grupo in toros_agrupados.items():
         if toro_nombre in outputs_por_toro:
-            outputs_toro = outputs_por_toro[toro_nombre]
-            # Si hay múltiples outputs, distribuir entre las muestras
-            if len(outputs_toro) > 0:
-                # Por simplicidad, asignar el primer output disponible
-                # En un caso real, esto debería basarse en alguna lógica de asociación
-                toro_entry['cantidad_semen_trabajada'] = float(outputs_toro[0].quantity_output)
-                # Remover el output usado para evitar duplicados
-                outputs_toro.pop(0)
-
-    # Calcular porcentajes para cada muestra
+            toro_grupo['cantidad_semen_trabajada'] = outputs_por_toro[toro_nombre]
+    
+    # Calcular porcentajes para cada grupo de toro
     # Fórmula: (Producción total × 100) / Cultivados
-    for toro_data in resumen_toros:
-        if toro_data['cantidad_total_ctv'] > 0:
-            toro_data['porcentaje'] = round((toro_data['produccion_total'] * 100) / toro_data['cantidad_total_ctv'], 2)
+    for toro_grupo in toros_agrupados.values():
+        if toro_grupo['cantidad_total_ctv'] > 0:
+            toro_grupo['porcentaje'] = round((toro_grupo['produccion_total'] * 100) / toro_grupo['cantidad_total_ctv'], 2)
         else:
-            toro_data['porcentaje'] = 0.0
+            toro_grupo['porcentaje'] = 0.0
+    
+    # Convertir a lista para la plantilla
+    resumen_toros = list(toros_agrupados.values())
     
     # Calcular totales para la plantilla
     totales = {

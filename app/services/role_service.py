@@ -90,6 +90,10 @@ def assign_role_to_user(db: Session, user_id: int, role_id: int) -> User:
     
     # Asignar el rol
     user.roles.append(role)
+    
+    # Sincronizar el campo is_admin con los roles
+    sync_admin_flag(user, db)
+    
     db.commit()
     db.refresh(user)
     return user
@@ -121,6 +125,10 @@ def remove_role_from_user(db: Session, user_id: int, role_id: int) -> User:
     
     # Quitar el rol
     user.roles.remove(role)
+    
+    # Sincronizar el campo is_admin con los roles
+    sync_admin_flag(user, db)
+    
     db.commit()
     db.refresh(user)
     return user
@@ -143,4 +151,13 @@ def is_client(user: User) -> bool:
 
 def is_veterinarian(user: User) -> bool:
     """Verifica si un usuario tiene el rol de veterinario"""
-    return has_role(user, "Veterinarian") 
+    return has_role(user, "Veterinarian")
+
+def sync_admin_flag(user: User, db: Session) -> None:
+    """
+    Sincroniza el campo is_admin con los roles del usuario.
+    Si el usuario tiene el rol "Admin", is_admin será True.
+    Si no tiene el rol "Admin", is_admin será False.
+    """
+    user.is_admin = has_role(user, "Admin")
+    db.commit() 

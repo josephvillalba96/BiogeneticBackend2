@@ -270,7 +270,7 @@ def create_user_by_admin(db: Session, user_data, role_ids: List[int]) -> User:
     db.commit()
     db.refresh(db_user)
     
-    # Asignar los roles especificados
+# Asignar los roles especificados
     if role_ids:
         for role_id in role_ids:
             role = db.query(Role).filter(Role.id == role_id).first()
@@ -279,6 +279,10 @@ def create_user_by_admin(db: Session, user_data, role_ids: List[int]) -> User:
                 logger.info(f"Rol '{role.name}' asignado al usuario: {user_data.email}")
             else:
                 logger.warning(f"No se encontró el rol con ID {role_id}")
+        
+        # Sincronizar el campo is_admin con los roles asignados
+        from app.services.role_service import sync_admin_flag
+        sync_admin_flag(db_user, db)
         
         db.commit()
         db.refresh(db_user)
