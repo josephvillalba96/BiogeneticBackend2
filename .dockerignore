@@ -1,0 +1,38 @@
+# Ignorar entornos virtuales de Python
+.venv/
+venv/
+env/
+ENV/
+
+# Ignorar archivos compilados de Python
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+
+# Ignorar base de datos local SQLite y archivos de base de datos
+*.db
+*.sqlite
+*.sql
+
+# Ignorar logs del servidor
+*.log
+
+# Ignorar archivos locales de configuración y variables de entorno secretas (Muy importante)
+.env
+.env.*
+
+# Ignorar control de versiones y configuraciones de editores
+.git/
+.gitignore
+.gitattributes
+.idea/
+.vscode/
+.cursor/
+.kluster
+
+# Ignorar documentaciones y archivos README no necesarios para el runtime (opcional)
+README.md
+AGENTS.md
+commands.md
+docs/
