@@ -63,7 +63,8 @@ app.swagger_ui_init_oauth = {
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        # "https://admin.biogenetic.com.co",
+        "https://admin.biogenetic.com.co",
+        "https://admin.biogenetic.com.co/",
         "*"
         ],
     allow_credentials=True,
