@@ -13,7 +13,7 @@ ENV/
 # Ignorar base de datos local SQLite y archivos de base de datos
 *.db
 *.sqlite
-*.sql
+# *.sql
 
 # Ignorar logs del servidor
 *.log
