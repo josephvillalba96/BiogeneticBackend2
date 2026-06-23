@@ -40,3 +40,6 @@ Thumbs.db
 
 .cursor/rules/kluster-code-verify.mdc
 .kluster
+
+# Credentials
+credentials/

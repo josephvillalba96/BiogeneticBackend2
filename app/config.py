@@ -1,6 +1,7 @@
 from pydantic_settings import BaseSettings
 from pydantic import field_validator, Field
 from pathlib import Path
+from typing import Optional
 
 # Ruta absoluta al archivo .env desde /app/config.py hacia la raíz
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,6 +20,10 @@ class Settings(BaseSettings):
     AWS_SECRET_ACCESS_KEY: str
     AWS_REGION: str
     S3_BUCKET_NAME: str
+
+    # Google Drive Configuration
+    GOOGLE_DRIVE_FOLDER_ID: Optional[str] = None
+    GOOGLE_DRIVE_CREDENTIALS_FILE: Optional[str] = "credentials/google_drive_key.json"
 
     # ePayco Configuration
     EPAYCO_PUBLIC_KEY: str = Field(..., description="ePayco Public Key")

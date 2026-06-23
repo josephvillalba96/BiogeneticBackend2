@@ -1,0 +1,142 @@
+opus_service:
+  description: Servicio para la gestión de registros OPUS (Ovum Pick-Up System)
+  base_model:
+    table: opus
+    fields:
+      - id: Integer (Primary Key)
+      - cliente_id: Integer (Foreign Key -> users.id)
+      - donante_id: Integer (Foreign Key -> bulls.id)
+      - toro_id: Integer (Foreign Key -> bulls.id)
+      - fecha: Date
+      - toro: String
+      - gi: Integer
+      - gii: Integer
+      - giii: Integer
+      - viables: Integer
+      - otros: Integer
+      - total_oocitos: Integer
+      - ctv: Integer
+      - clivados: Integer
+      - porcentaje_cliv: String
+      - prevision: Integer
+      - porcentaje_prevision: String
+      - empaque: Integer
+      - porcentaje_empaque: String
+      - vt_dt: Integer (Optional)
+      - porcentaje_vtdt: String (Optional)
+      - total_embriones: Integer
+      - porcentaje_total_embriones: String
+      - created_at: Date
+      - updated_at: Date
+
+  relationships:
+    - cliente:
+        type: ManyToOne
+        target: User
+        field: cliente_id
+    - donante:
+        type: ManyToOne
+        target: Bull
+        field: donante_id
+    - toro_rel:
+        type: ManyToOne
+        target: Bull
+        field: toro_id
+
+  methods:
+    get_opus:
+      description: Obtiene un registro de Opus por su ID
+      params:
+        - db: Session
+        - opus_id: int
+        - current_user: Optional[User]
+      validaciones:
+        - Verifica permisos del usuario actual
+        - Solo admin/veterinario pueden ver registros de otros clientes
+      returns: Optional[Opus]
+
+    get_opus_by_client:
+      description: Obtiene todos los registros de Opus de un cliente específico
+      params:
+        - db: Session
+        - client_id: int
+        - current_user: Optional[User]
+        - skip: int (default=0)
+        - limit: int (default=100)
+      validaciones:
+        - Verifica permisos del usuario actual
+        - Solo admin/veterinario pueden ver registros de otros clientes
+      returns: List[Dict[str, Any]]
+      included_data:
+        - Información básica del registro
+        - Nombre del cliente
+        - Nombre del donante
+        - Nombre del toro
+        - Todos los campos calculados
+
+    create_opus:
+      description: Crea un nuevo registro de Opus
+      params:
+        - db: Session
+        - opus: OpusCreate
+        - current_user: User
+      validaciones:
+        - Usuario debe ser admin o veterinario
+        - Cliente debe existir
+        - Donante debe existir y pertenecer al cliente
+        - Toro debe existir y pertenecer al cliente
+      returns: Opus
+
+    update_opus:
+      description: Actualiza un registro de Opus existente
+      params:
+        - db: Session
+        - opus_id: int
+        - opus: OpusUpdate
+        - current_user: User
+      validaciones:
+        - Usuario debe ser admin o veterinario
+        - Registro debe existir
+        - Si se actualiza toro_id, debe existir y pertenecer al cliente
+      returns: Optional[Opus]
+
+    delete_opus:
+      description: Elimina un registro de Opus
+      params:
+        - db: Session
+        - opus_id: int
+        - current_user: User
+      validaciones:
+        - Usuario debe ser admin o veterinario
+        - Registro debe existir
+      returns: bool
+
+    get_opus_grouped_by_date:
+      description: Obtiene los registros de Opus agrupados por fecha
+      params:
+        - db: Session
+        - current_user: User
+        - skip: int (default=0)
+        - limit: int (default=100)
+      validaciones:
+        - Si no es admin/veterinario, solo ve sus propios registros
+      returns: List[Dict[str, Any]]
+      summary_fields:
+        - fecha
+        - cliente_nombre
+        - total_registros
+        - total_oocitos
+        - total_embriones
+        - porcentaje_exito
+        - promedio_embriones
+
+  permisos:
+    admin:
+      - Acceso total a todos los registros
+      - Puede crear, actualizar y eliminar cualquier registro
+    veterinario:
+      - Acceso total a todos los registros
+      - Puede crear, actualizar y eliminar cualquier registro
+    cliente:
+      - Solo puede ver sus propios registros
+      - No puede crear, actualizar ni eliminar registros 

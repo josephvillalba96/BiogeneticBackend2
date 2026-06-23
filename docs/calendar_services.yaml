@@ -1,0 +1,767 @@
+# ============================================================================
+# SERVICIOS DE CALENDARIO - API DOCUMENTATION
+# ============================================================================
+
+# Configuración del servidor
+server:
+  host: "0.0.0.0"
+  port: 8000
+  base_url: "http://localhost:8000"
+  api_prefix: "/api"
+
+# Autenticación
+auth:
+  type: "JWT"
+  header: "Authorization"
+  prefix: "Bearer"
+
+# ============================================================================
+# 1. GESTIÓN DE TAREAS
+# ============================================================================
+
+tasks:
+  # Obtener todas las tareas con paginación
+  get_all:
+    method: "GET"
+    path: "/api/calendar/tasks"
+    description: "Obtener todas las tareas con filtros opcionales"
+    parameters:
+      - name: "skip"
+        type: "integer"
+        default: 0
+        description: "Número de registros a saltar"
+      - name: "limit"
+        type: "integer"
+        default: 100
+        description: "Número máximo de registros"
+      - name: "client_id"
+        type: "integer"
+        optional: true
+        description: "Filtrar por ID de cliente"
+      - name: "task_type"
+        type: "string"
+        optional: true
+        description: "Filtrar por tipo de tarea"
+      - name: "status"
+        type: "string"
+        optional: true
+        description: "Filtrar por estado"
+      - name: "start_date"
+        type: "date"
+        optional: true
+        description: "Fecha de inicio para filtrar"
+      - name: "end_date"
+        type: "date"
+        optional: true
+        description: "Fecha de fin para filtrar"
+    response:
+      type: "object"
+      structure:
+        data: "array[CalendarTask]"
+        total: "integer"
+        skip: "integer"
+        limit: "integer"
+
+  # Obtener tareas de un cliente específico
+  get_by_client:
+    method: "GET"
+    path: "/api/calendar/tasks/client/{client_id}"
+    description: "Obtener tareas de un cliente específico"
+    parameters:
+      - name: "client_id"
+        type: "integer"
+        path: true
+        description: "ID del cliente"
+      - name: "start_date"
+        type: "date"
+        optional: true
+        description: "Fecha de inicio para filtrar"
+      - name: "end_date"
+        type: "date"
+        optional: true
+        description: "Fecha de fin para filtrar"
+    response:
+      type: "array[CalendarTask]"
+
+  # Obtener tareas para una fecha específica
+  get_by_date:
+    method: "GET"
+    path: "/api/calendar/tasks/date/{date}"
+    description: "Obtener tareas para una fecha específica"
+    parameters:
+      - name: "date"
+        type: "date"
+        path: true
+        description: "Fecha para buscar tareas"
+    response:
+      type: "array[CalendarTask]"
+
+  # Obtener tareas por rango de fechas
+  get_by_date_range:
+    method: "GET"
+    path: "/api/calendar/tasks/date-range"
+    description: "Obtener tareas en un rango de fechas"
+    parameters:
+      - name: "start_date"
+        type: "date"
+        required: true
+        description: "Fecha de inicio"
+      - name: "end_date"
+        type: "date"
+        required: true
+        description: "Fecha de fin"
+      - name: "client_id"
+        type: "integer"
+        optional: true
+        description: "Filtrar por cliente"
+    response:
+      type: "array[CalendarTask]"
+
+  # Buscar tareas
+  search:
+    method: "GET"
+    path: "/api/calendar/tasks/search"
+    description: "Buscar tareas con criterios de búsqueda"
+    parameters:
+      - name: "q"
+        type: "string"
+        optional: true
+        description: "Término de búsqueda"
+      - name: "client_id"
+        type: "integer"
+        optional: true
+        description: "Filtrar por cliente"
+      - name: "task_type"
+        type: "string"
+        optional: true
+        description: "Filtrar por tipo"
+      - name: "status"
+        type: "string"
+        optional: true
+        description: "Filtrar por estado"
+      - name: "skip"
+        type: "integer"
+        default: 0
+        description: "Registros a saltar"
+      - name: "limit"
+        type: "integer"
+        default: 100
+        description: "Límite de registros"
+    response:
+      type: "object"
+      structure:
+        data: "array[CalendarTask]"
+        total: "integer"
+        skip: "integer"
+        limit: "integer"
+
+  # Obtener tarea específica
+  get_by_id:
+    method: "GET"
+    path: "/api/calendar/tasks/{task_id}"
+    description: "Obtener una tarea específica"
+    parameters:
+      - name: "task_id"
+        type: "integer"
+        path: true
+        description: "ID de la tarea"
+    response:
+      type: "CalendarTask"
+
+  # Crear tarea individual
+  create:
+    method: "POST"
+    path: "/api/calendar/tasks"
+    description: "Crear una nueva tarea"
+    request_body:
+      type: "CalendarTaskCreate"
+      required_fields:
+        - "client_id"
+        - "client_name"
+        - "task_name"
+        - "task_type"
+        - "summary"
+        - "start_date"
+        - "end_date"
+        - "created_by"
+    response:
+      type: "CalendarTask"
+      status_code: 201
+
+  # Crear tareas semanales automáticas
+  create_weekly:
+    method: "POST"
+    path: "/api/calendar/tasks/weekly"
+    description: "Crear tareas semanales automáticas basadas en template"
+    request_body:
+      type: "WeeklyTaskCreate"
+      required_fields:
+        - "client_id"
+        - "client_name"
+        - "start_date"
+        - "template_id"
+        - "created_by"
+    response:
+      type: "array[CalendarTask]"
+      status_code: 201
+
+  # Actualizar tarea
+  update:
+    method: "PUT"
+    path: "/api/calendar/tasks/{task_id}"
+    description: "Actualizar una tarea existente"
+    parameters:
+      - name: "task_id"
+        type: "integer"
+        path: true
+        description: "ID de la tarea"
+    request_body:
+      type: "CalendarTaskUpdate"
+    response:
+      type: "CalendarTask"
+
+  # Cambiar estado de tarea
+  toggle_status:
+    method: "PATCH"
+    path: "/api/calendar/tasks/{task_id}/toggle-status"
+    description: "Cambiar estado de una tarea (pending ↔ completed)"
+    parameters:
+      - name: "task_id"
+        type: "integer"
+        path: true
+        description: "ID de la tarea"
+    response:
+      type: "TaskToggleResponse"
+      structure:
+        id: "integer"
+        status: "string"
+        updated_at: "datetime"
+
+  # Eliminar tarea
+  delete:
+    method: "DELETE"
+    path: "/api/calendar/tasks/{task_id}"
+    description: "Eliminar una tarea"
+    parameters:
+      - name: "task_id"
+        type: "integer"
+        path: true
+        description: "ID de la tarea"
+    response:
+      type: "object"
+      structure:
+        message: "string"
+        deleted_id: "integer"
+
+# ============================================================================
+# 2. GESTIÓN DE TIPOS DE TAREAS
+# ============================================================================
+
+task_types:
+  # Obtener todos los tipos de tareas
+  get_all:
+    method: "GET"
+    path: "/api/calendar/task-types"
+    description: "Obtener todos los tipos de tareas"
+    parameters:
+      - name: "skip"
+        type: "integer"
+        default: 0
+        description: "Registros a saltar"
+      - name: "limit"
+        type: "integer"
+        default: 100
+        description: "Límite de registros"
+      - name: "active_only"
+        type: "boolean"
+        default: true
+        description: "Solo tipos activos"
+    response:
+      type: "object"
+      structure:
+        data: "array[CalendarTaskType]"
+        total: "integer"
+        skip: "integer"
+        limit: "integer"
+
+  # Obtener tipo de tarea específico
+  get_by_id:
+    method: "GET"
+    path: "/api/calendar/task-types/{task_type_id}"
+    description: "Obtener un tipo de tarea específico"
+    parameters:
+      - name: "task_type_id"
+        type: "integer"
+        path: true
+        description: "ID del tipo de tarea"
+    response:
+      type: "CalendarTaskType"
+
+  # Crear tipo de tarea
+  create:
+    method: "POST"
+    path: "/api/calendar/task-types"
+    description: "Crear un nuevo tipo de tarea"
+    request_body:
+      type: "CalendarTaskTypeCreate"
+      required_fields:
+        - "name"
+        - "type_code"
+        - "day_offset"
+    response:
+      type: "CalendarTaskType"
+      status_code: 201
+
+  # Actualizar tipo de tarea
+  update:
+    method: "PUT"
+    path: "/api/calendar/task-types/{task_type_id}"
+    description: "Actualizar un tipo de tarea"
+    parameters:
+      - name: "task_type_id"
+        type: "integer"
+        path: true
+        description: "ID del tipo de tarea"
+    request_body:
+      type: "CalendarTaskTypeUpdate"
+    response:
+      type: "CalendarTaskType"
+
+  # Eliminar tipo de tarea
+  delete:
+    method: "DELETE"
+    path: "/api/calendar/task-types/{task_type_id}"
+    description: "Eliminar un tipo de tarea"
+    parameters:
+      - name: "task_type_id"
+        type: "integer"
+        path: true
+        description: "ID del tipo de tarea"
+    response:
+      type: "object"
+      structure:
+        message: "string"
+
+# ============================================================================
+# 3. GESTIÓN DE PLANTILLAS
+# ============================================================================
+
+templates:
+  # Obtener todas las plantillas
+  get_all:
+    method: "GET"
+    path: "/api/calendar/templates"
+    description: "Obtener todas las plantillas con sus tareas"
+    parameters:
+      - name: "skip"
+        type: "integer"
+        default: 0
+        description: "Registros a saltar"
+      - name: "limit"
+        type: "integer"
+        default: 100
+        description: "Límite de registros"
+      - name: "active_only"
+        type: "boolean"
+        default: true
+        description: "Solo plantillas activas"
+    response:
+      type: "object"
+      structure:
+        data: "array[CalendarTemplate]"
+        total: "integer"
+        skip: "integer"
+        limit: "integer"
+
+  # Obtener plantilla específica
+  get_by_id:
+    method: "GET"
+    path: "/api/calendar/templates/{template_id}"
+    description: "Obtener una plantilla específica con sus tareas"
+    parameters:
+      - name: "template_id"
+        type: "integer"
+        path: true
+        description: "ID de la plantilla"
+    response:
+      type: "CalendarTemplate"
+
+  # Crear plantilla
+  create:
+    method: "POST"
+    path: "/api/calendar/templates"
+    description: "Crear una nueva plantilla"
+    request_body:
+      type: "CalendarTemplateCreate"
+      required_fields:
+        - "name"
+    response:
+      type: "CalendarTemplate"
+      status_code: 201
+
+  # Actualizar plantilla
+  update:
+    method: "PUT"
+    path: "/api/calendar/templates/{template_id}"
+    description: "Actualizar una plantilla"
+    parameters:
+      - name: "template_id"
+        type: "integer"
+        path: true
+        description: "ID de la plantilla"
+    request_body:
+      type: "CalendarTemplateUpdate"
+    response:
+      type: "CalendarTemplate"
+
+  # Eliminar plantilla
+  delete:
+    method: "DELETE"
+    path: "/api/calendar/templates/{template_id}"
+    description: "Eliminar una plantilla"
+    parameters:
+      - name: "template_id"
+        type: "integer"
+        path: true
+        description: "ID de la plantilla"
+    response:
+      type: "object"
+      structure:
+        message: "string"
+
+# ============================================================================
+# 4. CONSULTAS Y REPORTES
+# ============================================================================
+
+reports:
+  # Obtener estadísticas del calendario
+  stats:
+    method: "GET"
+    path: "/api/calendar/stats"
+    description: "Obtener estadísticas del calendario"
+    parameters:
+      - name: "start_date"
+        type: "date"
+        optional: true
+        description: "Fecha de inicio para estadísticas"
+      - name: "end_date"
+        type: "date"
+        optional: true
+        description: "Fecha de fin para estadísticas"
+    response:
+      type: "object"
+      structure:
+        data:
+          total_tasks: "integer"
+          pending_tasks: "integer"
+          completed_tasks: "integer"
+          cancelled_tasks: "integer"
+          tasks_by_type: "object"
+          tasks_by_client: "object"
+
+# ============================================================================
+# 5. OPERACIONES EN LOTE
+# ============================================================================
+
+bulk_operations:
+  # Eliminar múltiples tareas
+  bulk_delete:
+    method: "DELETE"
+    path: "/api/calendar/tasks/bulk"
+    description: "Eliminar múltiples tareas"
+    request_body:
+      type: "BulkDeleteRequest"
+      required_fields:
+        - "task_ids"
+    response:
+      type: "object"
+      structure:
+        message: "string"
+        deleted_count: "integer"
+
+  # Actualizar estado de múltiples tareas
+  bulk_status_update:
+    method: "PATCH"
+    path: "/api/calendar/tasks/bulk-status"
+    description: "Actualizar estado de múltiples tareas"
+    request_body:
+      type: "BulkStatusUpdateRequest"
+      required_fields:
+        - "task_ids"
+        - "status"
+    response:
+      type: "object"
+      structure:
+        message: "string"
+        updated_count: "integer"
+
+  # Duplicar tareas entre clientes
+  duplicate_tasks:
+    method: "POST"
+    path: "/api/calendar/tasks/duplicate"
+    description: "Duplicar tareas de un cliente a otro"
+    request_body:
+      type: "TaskDuplicateRequest"
+      required_fields:
+        - "source_client_id"
+        - "target_client_id"
+        - "start_date"
+    response:
+      type: "array[CalendarTask]"
+
+# ============================================================================
+# 6. EXPORTACIÓN E IMPORTACIÓN
+# ============================================================================
+
+import_export:
+  # Exportar tareas a CSV
+  export_csv:
+    method: "GET"
+    path: "/api/calendar/tasks/export/csv"
+    description: "Exportar tareas a CSV"
+    parameters:
+      - name: "start_date"
+        type: "date"
+        optional: true
+        description: "Fecha de inicio para exportar"
+      - name: "end_date"
+        type: "date"
+        optional: true
+        description: "Fecha de fin para exportar"
+      - name: "client_id"
+        type: "integer"
+        optional: true
+        description: "Filtrar por cliente"
+    response:
+      type: "file"
+      content_type: "text/csv"
+      headers:
+        Content-Disposition: "attachment; filename=calendar_tasks.csv"
+
+  # Importar tareas desde CSV
+  import_csv:
+    method: "POST"
+    path: "/api/calendar/tasks/import/csv"
+    description: "Importar tareas desde CSV"
+    request_body:
+      type: "multipart/form-data"
+      required_fields:
+        - "file"
+    response:
+      type: "object"
+      structure:
+        message: "string"
+        imported_count: "integer"
+        errors: "array[string]"
+
+# ============================================================================
+# 7. RUTAS ESPECIALES
+# ============================================================================
+
+special:
+  # Crear tareas desde template
+  create_from_template:
+    method: "POST"
+    path: "/api/calendar/tasks/from-template"
+    description: "Crear tareas basadas en un template"
+    parameters:
+      - name: "template_id"
+        type: "integer"
+        required: true
+        description: "ID del template"
+      - name: "client_id"
+        type: "integer"
+        required: true
+        description: "ID del cliente"
+      - name: "start_date"
+        type: "date"
+        required: true
+        description: "Fecha de inicio"
+    response:
+      type: "array[CalendarTask]"
+      status_code: 201
+
+# ============================================================================
+# 8. MODELOS DE DATOS
+# ============================================================================
+
+data_models:
+  CalendarTask:
+    fields:
+      id: "integer"
+      client_id: "integer"
+      client_name: "string"
+      task_name: "string"
+      task_type: "string"
+      summary: "string"
+      description: "string"
+      start_date: "date"
+      start_time: "time"
+      end_date: "date"
+      end_time: "time"
+      veterinarian: "string"
+      location: "string"
+      status: "string"
+      suffix: "string"
+      task_group_id: "string"
+      color_background: "string"
+      color_foreground: "string"
+      created_by: "integer"
+      created_at: "datetime"
+      updated_at: "datetime"
+
+  CalendarTaskType:
+    fields:
+      id: "integer"
+      name: "string"
+      type_code: "string"
+      day_offset: "integer"
+      color_background: "string"
+      color_foreground: "string"
+      description: "string"
+      is_active: "boolean"
+      created_at: "datetime"
+
+  CalendarTemplate:
+    fields:
+      id: "integer"
+      name: "string"
+      description: "string"
+      duration_days: "integer"
+      is_active: "boolean"
+      created_at: "datetime"
+      tasks: "array[object]"
+
+  CalendarTemplateTask:
+    fields:
+      id: "integer"
+      template_id: "integer"
+      task_type_id: "integer"
+      day_offset: "integer"
+      order_index: "integer"
+
+# ============================================================================
+# 9. ENUMS Y CONSTANTES
+# ============================================================================
+
+enums:
+  TaskStatus:
+    values:
+      - "pending"
+      - "completed"
+      - "cancelled"
+
+  TaskType:
+    values:
+      - "opus"
+      - "fiv"
+      - "civ"
+      - "d3"
+      - "d5"
+      - "prevision"
+      - "informe"
+
+  DocumentType:
+    values:
+      - "identity_card"
+      - "passport"
+      - "other"
+
+# ============================================================================
+# 10. CONFIGURACIÓN DE SEGURIDAD
+# ============================================================================
+
+security:
+  authentication:
+    type: "JWT"
+    required: true
+    header: "Authorization"
+    prefix: "Bearer"
+
+  authorization:
+    roles:
+      - "admin"
+      - "user"
+      - "veterinarian"
+
+  cors:
+    allowed_origins:
+      - "http://localhost:3000"
+      - "http://localhost:8080"
+    allowed_methods:
+      - "GET"
+      - "POST"
+      - "PUT"
+      - "DELETE"
+      - "PATCH"
+    allowed_headers:
+      - "Authorization"
+      - "Content-Type"
+
+# ============================================================================
+# 11. EJEMPLOS DE USO
+# ============================================================================
+
+examples:
+  create_weekly_tasks:
+    description: "Crear tareas semanales automáticas"
+    request:
+      method: "POST"
+      url: "/api/calendar/tasks/weekly"
+      headers:
+        Authorization: "Bearer <token>"
+        Content-Type: "application/json"
+      body:
+        client_id: 123
+        client_name: "María González"
+        start_date: "2024-01-15"
+        veterinarian: "Dr. Carlos Pérez"
+        location: "Clínica Central"
+        description: "Proceso FIV completo"
+        template_id: 1
+        created_by: 1
+    response:
+      status_code: 201
+      body: "array[CalendarTask]"
+
+  get_stats:
+    description: "Obtener estadísticas del calendario"
+    request:
+      method: "GET"
+      url: "/api/calendar/stats?start_date=2024-01-01&end_date=2024-01-31"
+      headers:
+        Authorization: "Bearer <token>"
+    response:
+      status_code: 200
+      body:
+        data:
+          total_tasks: 150
+          pending_tasks: 45
+          completed_tasks: 95
+          cancelled_tasks: 10
+          tasks_by_type:
+            opus: 20
+            fiv: 20
+            civ: 40
+            d3: 20
+            d5: 20
+            prevision: 20
+            informe: 10
+          tasks_by_client:
+            "123": 8
+            "124": 8
+
+  search_tasks:
+    description: "Buscar tareas con filtros"
+    request:
+      method: "GET"
+      url: "/api/calendar/tasks/search?client_name=María&task_type=opus&status=pending"
+      headers:
+        Authorization: "Bearer <token>"
+    response:
+      status_code: 200
+      body:
+        data: "array[CalendarTask]"
+        total: 5
+        skip: 0
+        limit: 100

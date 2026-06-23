@@ -1,0 +1,277 @@
+services:
+  auth_service:
+    description: Servicio de autenticación y manejo de tokens
+    methods:
+      - create_access_token:
+          description: Crea un token de acceso JWT
+          params:
+            - data: Dict[str, Any]
+            - expires_delta: Optional[timedelta]
+      - verify_password:
+          description: Verifica si la contraseña coincide con el hash
+          params:
+            - plain_password: str
+            - hashed_password: str
+      - get_password_hash:
+          description: Genera un hash de la contraseña
+          params:
+            - password: str
+
+  bull_service:
+    description: Servicio para la gestión de toros y vacas
+    methods:
+      - get_bull:
+          description: Obtiene un toro por su ID
+          params:
+            - db: Session
+            - bull_id: int
+            - current_user: User
+      - get_bulls:
+          description: Obtiene lista de toros con filtros opcionales
+          params:
+            - db: Session
+            - skip: int
+            - limit: int
+            - current_user: User
+            - search: Optional[str]
+      - create_bull:
+          description: Crea un nuevo registro de toro
+          params:
+            - db: Session
+            - bull: BullCreate
+            - current_user: User
+      - update_bull:
+          description: Actualiza un registro de toro existente
+          params:
+            - db: Session
+            - bull_id: int
+            - bull: BullUpdate
+            - current_user: User
+      - delete_bull:
+          description: Elimina un registro de toro
+          params:
+            - db: Session
+            - bull_id: int
+            - current_user: User
+
+  opus_service:
+    description: Servicio para la gestión de registros OPUS
+    methods:
+      - get_opus:
+          description: Obtiene un registro de Opus por su ID
+          params:
+            - db: Session
+            - opus_id: int
+            - current_user: Optional[User]
+      - get_opus_by_client:
+          description: Obtiene todos los registros de Opus de un cliente específico
+          params:
+            - db: Session
+            - client_id: int
+            - current_user: Optional[User]
+            - skip: int
+            - limit: int
+      - create_opus:
+          description: Crea un nuevo registro de Opus
+          params:
+            - db: Session
+            - opus: OpusCreate
+            - current_user: User
+      - update_opus:
+          description: Actualiza un registro de Opus existente
+          params:
+            - db: Session
+            - opus_id: int
+            - opus: OpusUpdate
+            - current_user: User
+      - delete_opus:
+          description: Elimina un registro de Opus
+          params:
+            - db: Session
+            - opus_id: int
+            - current_user: User
+      - get_opus_grouped_by_date:
+          description: Obtiene los registros de Opus agrupados por fecha
+          params:
+            - db: Session
+            - current_user: User
+            - skip: int
+            - limit: int
+
+  race_service:
+    description: Servicio para la gestión de razas
+    methods:
+      - get_race:
+          description: Obtiene una raza por su ID
+          params:
+            - db: Session
+            - race_id: int
+      - get_races:
+          description: Obtiene lista de razas
+          params:
+            - db: Session
+            - skip: int
+            - limit: int
+      - create_race:
+          description: Crea una nueva raza
+          params:
+            - db: Session
+            - race: RaceCreate
+      - update_race:
+          description: Actualiza una raza existente
+          params:
+            - db: Session
+            - race_id: int
+            - race: RaceUpdate
+      - delete_race:
+          description: Elimina una raza
+          params:
+            - db: Session
+            - race_id: int
+
+  role_service:
+    description: Servicio para la gestión de roles y permisos
+    methods:
+      - is_admin:
+          description: Verifica si un usuario es administrador
+          params:
+            - user: User
+      - is_veterinarian:
+          description: Verifica si un usuario es veterinario
+          params:
+            - user: User
+      - is_client:
+          description: Verifica si un usuario es cliente
+          params:
+            - user: User
+
+  sex_service:
+    description: Servicio para la gestión de sexos
+    methods:
+      - get_sex:
+          description: Obtiene un sexo por su ID
+          params:
+            - db: Session
+            - sex_id: int
+      - get_sexes:
+          description: Obtiene lista de sexos
+          params:
+            - db: Session
+            - skip: int
+            - limit: int
+      - create_sex:
+          description: Crea un nuevo sexo
+          params:
+            - db: Session
+            - sex: SexCreate
+      - update_sex:
+          description: Actualiza un sexo existente
+          params:
+            - db: Session
+            - sex_id: int
+            - sex: SexUpdate
+      - delete_sex:
+          description: Elimina un sexo
+          params:
+            - db: Session
+            - sex_id: int
+
+  user_service:
+    description: Servicio para la gestión de usuarios
+    methods:
+      - get_user:
+          description: Obtiene un usuario por su ID
+          params:
+            - db: Session
+            - user_id: int
+      - get_user_by_email:
+          description: Obtiene un usuario por su email
+          params:
+            - db: Session
+            - email: str
+      - get_users:
+          description: Obtiene lista de usuarios con filtros opcionales
+          params:
+            - db: Session
+            - skip: int
+            - limit: int
+            - search: Optional[str]
+            - role_id: Optional[int]
+      - create_user:
+          description: Crea un nuevo usuario
+          params:
+            - db: Session
+            - user: UserCreate
+      - update_user:
+          description: Actualiza un usuario existente
+          params:
+            - db: Session
+            - user_id: int
+            - user: UserUpdate
+      - delete_user:
+          description: Elimina un usuario
+          params:
+            - db: Session
+            - user_id: int
+
+  input_service:
+    description: Servicio para la gestión de entradas de inventario
+    methods:
+      - get_input:
+          description: Obtiene una entrada por su ID
+          params:
+            - db: Session
+            - input_id: int
+      - get_inputs:
+          description: Obtiene lista de entradas
+          params:
+            - db: Session
+            - skip: int
+            - limit: int
+      - create_input:
+          description: Crea una nueva entrada
+          params:
+            - db: Session
+            - input: InputCreate
+      - update_input:
+          description: Actualiza una entrada existente
+          params:
+            - db: Session
+            - input_id: int
+            - input: InputUpdate
+      - delete_input:
+          description: Elimina una entrada
+          params:
+            - db: Session
+            - input_id: int
+
+  output_service:
+    description: Servicio para la gestión de salidas de inventario
+    methods:
+      - get_output:
+          description: Obtiene una salida por su ID
+          params:
+            - db: Session
+            - output_id: int
+      - get_outputs:
+          description: Obtiene lista de salidas
+          params:
+            - db: Session
+            - skip: int
+            - limit: int
+      - create_output:
+          description: Crea una nueva salida
+          params:
+            - db: Session
+            - output: OutputCreate
+      - update_output:
+          description: Actualiza una salida existente
+          params:
+            - db: Session
+            - output_id: int
+            - output: OutputUpdate
+      - delete_output:
+          description: Elimina una salida
+          params:
+            - db: Session
+            - output_id: int 

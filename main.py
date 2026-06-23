@@ -4,6 +4,7 @@ from app.routes.api import router as api_router
 from app.database.base import engine
 # Importar todos los modelos para asegurar que se registren correctamente
 from app.models import Base, verify_all_models
+from app.services.backup_service import start_backup_scheduler, stop_backup_scheduler
 from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
@@ -12,6 +13,7 @@ from fastapi.responses import HTMLResponse
 import logging
 import os
 import asyncio
+from contextlib import asynccontextmanager
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -35,7 +37,16 @@ verify_all_models()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login", auto_error=False)
 security_bearer = HTTPBearer(auto_error=False)
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Iniciar programador de backups en segundo plano
+    await start_backup_scheduler()
+    yield
+    # Detener programador de backups
+    stop_backup_scheduler()
+
 app = FastAPI(
+    lifespan=lifespan,
     title="BioGenetic API",
     description="API para el proyecto BioGenetic",
     version="0.1.0",
